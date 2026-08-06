@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Dotnet_Sample_Raylib/Dotnet_Sample_Raylib.csproj" />
+  <Project Path="Dotnet_Test/Dotnet_Test.csproj" />
+  <Project Path="NF.Dotnetlibs.AI.Pathfinder/NF.Dotnetlibs.AI.Pathfinder.csproj" />
+</Solution>
