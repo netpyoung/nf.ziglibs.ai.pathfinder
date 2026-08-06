@@ -1,0 +1,20 @@
+.{
+    .name = .Sample_Raylib,
+    .version = "0.0.0",
+    .fingerprint = 0x3766dc0503a0a1eb,
+    .minimum_zig_version = "0.16.0",
+    .dependencies = .{
+        .nf_ziglibs_ai_pathfinder = .{
+            .path = "../nf_ziglibs_ai_pathfinder",
+        },
+        .raylib_zig = .{
+            .url = "git+https://github.com/raylib-zig/raylib-zig?ref=devel#8758f4cd3a5ae0df6941c4715257223d34c5ad3e",
+            .hash = "raylib_zig-6.0.0-KE8RECZ8BQDm-txuospkpZHbJ6DNpacUF7D88RWQ_qAe",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}

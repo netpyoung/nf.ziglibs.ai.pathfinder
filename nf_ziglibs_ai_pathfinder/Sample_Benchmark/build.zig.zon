@@ -1,0 +1,15 @@
+﻿.{
+    .name = .Sample_Benchmark,
+    .version = "0.0.1",
+    .fingerprint = 0xe00c32fb608a0486,
+    .dependencies = .{
+        .nf_ziglibs_ai_pathfinder = .{
+            .path = "../nf_ziglibs_ai_pathfinder",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}

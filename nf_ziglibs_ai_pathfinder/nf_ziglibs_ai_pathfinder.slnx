@@ -1,0 +1,15 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="ARM" />
+    <Platform Name="ARM64" />
+    <Platform Name="WASM32" />
+    <Platform Name="X64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="nf_ziglibs_ai_pathfinder/nf_ziglibs_ai_pathfinder.zigproj" Type="98e5f03a-0b5f-41b0-a3fa-df2b47b954c1" Id="a2591163-4ec5-4398-833d-11df19a5a5a4" />
+  <Project Path="Sample_Benchmark/Sample_Benchmark.zigproj" Type="98e5f03a-0b5f-41b0-a3fa-df2b47b954c1" Id="44913467-23cb-4bc9-bd63-e1c013e27a0b" />
+  <Project Path="Sample_Raylib/Sample_Raylib.zigproj" Type="98e5f03a-0b5f-41b0-a3fa-df2b47b954c1" Id="4813cfe4-f381-4b7f-86b3-557f9b7b02d5">
+    <Platform Solution="*|x86" Project="Win32" />
+  </Project>
+</Solution>

@@ -1,0 +1,12 @@
+﻿.{
+    .name = .nf_ziglibs_ai_pathfinder,
+    .version = "0.0.1",
+    .fingerprint = 0xba11a9e49927072c,
+    .dependencies = .{
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
