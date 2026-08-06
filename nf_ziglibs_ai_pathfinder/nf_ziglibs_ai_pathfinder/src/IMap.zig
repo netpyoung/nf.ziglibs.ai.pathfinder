@@ -11,6 +11,8 @@ pub const VTable = struct {
     vptr_GetHeight: *const fn (*anyopaque) i32,
     vptr_SetWallAt: *const fn (*anyopaque, x: i32, y: i32, isWall: bool) void,
     vptr_SetEmptyAt: *const fn (*anyopaque, x: i32, y: i32, isWall: bool) void,
+    vptr_IsWallAt: *const fn (*anyopaque, x: i32, y: i32) bool,
+    vptr_IsEmptyAt: *const fn (*anyopaque, x: i32, y: i32) bool,
 };
 
 pub inline fn GetWidth(this: IMap) i32 {
@@ -28,6 +30,15 @@ pub inline fn SetWallAt(this: IMap, x: i32, y: i32, isWall: bool) void {
 pub inline fn SetEmptyAt(this: IMap, x: i32, y: i32, isWall: bool) void {
     this.vtable.vptr_SetEmptyAt(this.ptr, x, y, isWall);
 }
+
+pub inline fn IsWallAt(this: IMap, x: i32, y: i32) bool {
+    return this.vtable.vptr_IsWallAt(this.ptr, x, y);
+}
+
+pub inline fn IsEmptyAt(this: IMap, x: i32, y: i32) bool {
+    return this.vtable.vptr_IsEmptyAt(this.ptr, x, y);
+}
+
 
 pub fn LoadMapFromCollisionFile(io: std.Io, allocator: std.mem.Allocator, map: IMap, collisionFilePath: []const u8) !void {
     const contents = try std.Io.Dir.cwd().readFileAlloc(io, collisionFilePath, allocator, .unlimited);
