@@ -2,26 +2,46 @@
 
 Console.WriteLine("Hello, World!");
 
-//using (Pathlib.UsingDebugAllocatorGuard())
+using (Pathlib.UsingDebugAllocatorGuard())
 {
-    //    var map = Pathlib.CreateMap_Jpsb(100, 100);
-    using (var map = Pathlib.CreateMap_Jpsb(100, 100))
+    E_ERRORCODE r;
+
+    HandleJpsbMap? mapOrNull = Pathlib.GetMap_Jpsb(100, 100, out r);
+    if (mapOrNull is not HandleJpsbMap map)
     {
-        map.SetWallAt(1, 1, true);
+        Console.Error.WriteLine($"r: {r}");
+        return;
+    }
+
+    using (map)
+    {
+        map.SetWallAt(0, 1, true);
         map.SetWallAt(1, 2, true);
 
-        var pathfinder = Pathlib.CreatePathfinder_Jpsb(map);
-        //        using (var pathfinder = Pathlib.CreatePathfinder_Jpsb(map))
+        HandlePathfinderJpsb? pathfinderOrNull = Pathlib.GetPathfinder_Jpsb(map, out r);
+        if (pathfinderOrNull is not HandlePathfinderJpsb pathfinder)
         {
-            //            Console.WriteLine(pathfinder.EnsurePathbufferTotalCapacity(10));
-            //        Console.WriteLine(pathfinder.EnsureOpenlistTotalCapacity(10));
-            //
+            Console.Error.WriteLine($"r: {r}");
+            return;
+        }
 
-            var points = pathfinder.FindPath(0, 0, 99, 99, E_SMOOTHMETHOD.NONE);
+        using (pathfinder)
+        {
+            ReadOnlySpan<int2> points = pathfinder.FindPath(0, 0, 99, 99, E_SMOOTHMETHOD.NONE, out r);
+            if (r != E_ERRORCODE.NONE)
+            {
+                Console.Error.WriteLine($"r: {r}");
+                return;
+            }
             Console.WriteLine($"points.Length={points.Length}");
 
 
-            points = pathfinder.FindPath(0, 0, 99, 99, E_SMOOTHMETHOD.BRESENHAM_THICKLINE);
+            points = pathfinder.FindPath(0, 0, 99, 99, E_SMOOTHMETHOD.BRESENHAM_THICKLINE, out r);
+            if (r != E_ERRORCODE.NONE)
+            {
+                Console.Error.WriteLine($"r: {r}");
+                return;
+            }
             Console.WriteLine($"points.Length={points.Length}");
         }
     }

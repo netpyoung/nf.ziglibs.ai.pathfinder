@@ -2,15 +2,18 @@
 
 public static class Pathlib
 {
-    public static HandleJpsbMap CreateMap_Jpsb(int width, int height)
+
+
+    public static HandleJpsbMap? GetMap_Jpsb(int width, int height, out E_ERRORCODE outErr)
     {
-        return HandleJpsbMap.Init(width, height);
+        return HandleJpsbMap.GetMap_Jpsb(width, height, out outErr);
     }
 
-    public static HandlePathfinderJpsb CreatePathfinder_Jpsb(HandleJpsbMap map)
+    public static HandlePathfinderJpsb? GetPathfinder_Jpsb(HandleJpsbMap map, out E_ERRORCODE outErr)
     {
-        return HandlePathfinderJpsb.Init(map);
+        return HandlePathfinderJpsb.GetPathfinder_Jpsb(map, out outErr);
     }
+
 
     public static DebugAllocatorGuard UsingDebugAllocatorGuard()
     {
@@ -21,13 +24,20 @@ public static class Pathlib
     {
         internal DebugAllocatorGuard()
         {
-            Library.pf_debug_allocator_init();
+            E_ERRORCODE err = Library.pf_debug_allocator_init();
+            if (err != E_ERRORCODE.NONE)
+            {
+                Console.Error.WriteLine($"err: {err}");
+            }
         }
 
         public void Dispose()
         {
-            Library.pf_debug_allocator_deinit();
+            E_ERRORCODE err = Library.pf_debug_allocator_deinit();
+            if (err != E_ERRORCODE.NONE)
+            {
+                Console.Error.WriteLine($"err: {err}");
+            }
         }
     }
-
 }

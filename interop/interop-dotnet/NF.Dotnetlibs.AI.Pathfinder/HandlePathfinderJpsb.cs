@@ -16,10 +16,16 @@ public sealed class HandlePathfinderJpsb : AHandlePathfinder
         return true;
     }
 
-    public static HandlePathfinderJpsb Init(HandleJpsbMap handleMap)
+    internal static HandlePathfinderJpsb? GetPathfinder_Jpsb(HandleJpsbMap handleMap, out E_ERRORCODE outErr)
     {
-        var result = Library.pf_jpsb_pathfinder_create(handleMap, out HandlePathfinderJpsb handle);
-        Console.WriteLine($"pf_jpsb_create_pathfinder={result}");
-        return handle;
+        E_ERRORCODE r = Library.pf_jpsb_pathfinder_create(handleMap, out HandlePathfinderJpsb outHandle);
+        outErr = r;
+
+        if (r != E_ERRORCODE.NONE)
+        {
+            return null;
+        }
+
+        return outHandle;
     }
 }

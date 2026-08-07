@@ -20,10 +20,16 @@ public sealed class HandleJpsbMap : SafeHandle, IMap
         return true;
     }
 
-    internal static HandleJpsbMap Init(int width, int height)
+    internal static HandleJpsbMap? GetMap_Jpsb(int width, int height, out E_ERRORCODE outErr)
     {
-        var result = Library.pf_jpsb_map_create(width, height, out HandleJpsbMap handle);
-        Console.WriteLine($"pf_jpsb_create_map={result}");
+        E_ERRORCODE r = Library.pf_jpsb_map_create(width, height, out HandleJpsbMap handle);
+        outErr = r;
+
+        if (r != E_ERRORCODE.NONE)
+        {
+            return null;
+        }
+
         return handle;
     }
 

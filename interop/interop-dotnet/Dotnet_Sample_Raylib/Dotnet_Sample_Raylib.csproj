@@ -8,9 +8,9 @@
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 	<Target Name="CopyNativeDlls" AfterTargets="Build">
-		<Copy SourceFiles="$(ProjectDir)..\..\..\__BUILD\nf_ziglibs_ai_pathfinder.dll" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+		<Copy SourceFiles="$(ProjectDir)..\..\..\__BUILD\windows\nf_ziglibs_ai_pathfinder.dll" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
 	</Target>
 	<ItemGroup>
-	  <ProjectReference Include="..\NF.Dotnetlibs.AI.Pathfinder\NF.Dotnetlibs.AI.Pathfinder.csproj" />
+		<ProjectReference Include="..\NF.Dotnetlibs.AI.Pathfinder\NF.Dotnetlibs.AI.Pathfinder.csproj" />
 	</ItemGroup>
 </Project>
