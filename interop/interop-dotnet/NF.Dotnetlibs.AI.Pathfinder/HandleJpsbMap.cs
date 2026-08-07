@@ -42,4 +42,24 @@ public sealed class HandleJpsbMap : SafeHandle, IMap
     {
         Library.pf_jpsb_map_set_empty_at(this, x, y, isEmpty);
     }
+
+    public bool IsWallAt(int x, int y)
+    {
+        return Library.pf_jpsb_map_is_wall_at(this, x, y);
+    }
+
+    public bool IsEmptyAt(int x, int y)
+    {
+        return Library.pf_jpsb_map_is_empty_at(this, x, y);
+    }
+
+    public int GetWidth()
+    {
+        return Library.pf_jpsb_map_get_width(this);
+    }
+
+    public int GetHeight()
+    {
+        return Library.pf_jpsb_map_get_height(this);
+    }
 }

@@ -6,11 +6,15 @@
 		<RootNamespace>interop_dotnet</RootNamespace>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 	<Target Name="CopyNativeDlls" AfterTargets="Build">
 		<Copy SourceFiles="$(ProjectDir)..\..\..\__BUILD\windows\nf_ziglibs_ai_pathfinder.dll" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
 	</Target>
 	<ItemGroup>
 		<ProjectReference Include="..\NF.Dotnetlibs.AI.Pathfinder\NF.Dotnetlibs.AI.Pathfinder.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+	  <PackageReference Include="Raylib-cs" Version="8.0.0" />
 	</ItemGroup>
 </Project>

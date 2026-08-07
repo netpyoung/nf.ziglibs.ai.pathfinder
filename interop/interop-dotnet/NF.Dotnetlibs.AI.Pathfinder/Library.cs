@@ -7,6 +7,22 @@ public struct int2
 {
     public int x;
     public int y;
+
+    public int2() { }
+    public int2(int x, int y)
+    {
+        this.x = x;
+        this.y = y;
+    }
+    public static bool operator ==(int2 left, int2 right)
+    {
+        return left.x == right.x && left.y == right.y;
+    }
+
+    public static bool operator !=(int2 left, int2 right)
+    {
+        return !(left == right);
+    }
 }
 
 public enum E_SMOOTHMETHOD : int
@@ -75,6 +91,17 @@ public static class Library
 
     [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
     public static extern void pf_jpsb_map_set_empty_at(HandleJpsbMap handleMap, int x, int y, bool isEmpty);
+
+    [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+    public static extern bool pf_jpsb_map_is_wall_at(HandleJpsbMap handleMap, int x, int y);
+
+    [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+    public static extern bool pf_jpsb_map_is_empty_at(HandleJpsbMap handleMap, int x, int y);
+
+    [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int pf_jpsb_map_get_width(HandleJpsbMap handleMap);
+    [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int pf_jpsb_map_get_height(HandleJpsbMap handleMap);
 
 
     // =========================================
