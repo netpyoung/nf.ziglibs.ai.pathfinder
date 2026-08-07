@@ -40,11 +40,11 @@ pub fn Deinit(this: *Searcher_Astar, allocator: std.mem.Allocator) void {
     this.openQueue.Deinit(allocator);
 }
 
-pub fn Search(this: *Searcher_Astar, allocator: std.mem.Allocator, ax: i32, ay: i32, bx: i32, by: i32, pathBuffer: *std.ArrayList(int2)) anyerror!bool {
+pub fn Search(this: *Searcher_Astar, allocator: std.mem.Allocator, sx: i32, sy: i32, gx: i32, gy: i32, pathBuffer: *std.ArrayList(int2)) anyerror!bool {
     pathBuffer.clearRetainingCapacity();
 
-    const startp = int2.Init(ax, ay);
-    const goalp = int2.Init(bx, by);
+    const startp = int2.Init(sx, sy);
+    const goalp = int2.Init(gx, gy);
 
     const goalNodeOrNull = try this.TryFind(allocator, startp, goalp);
     if (goalNodeOrNull == null) {
@@ -190,9 +190,9 @@ const Interface = struct {
         .vptr_Search = _vptr_Search,
     };
 
-    fn _vptr_Search(context: *anyopaque, allocator: std.mem.Allocator, ax: i32, ay: i32, bx: i32, by: i32, resultNodes: *std.ArrayList(int2)) !bool {
+    fn _vptr_Search(context: *anyopaque, allocator: std.mem.Allocator, sx: i32, sy: i32, gx: i32, gy: i32, resultNodes: *std.ArrayList(int2)) !bool {
         const this: *This = @ptrCast(@alignCast(context));
-        return this.Search(allocator, ax, ay, bx, by, resultNodes);
+        return this.Search(allocator, sx, sy, gx, gy, resultNodes);
     }
 };
 

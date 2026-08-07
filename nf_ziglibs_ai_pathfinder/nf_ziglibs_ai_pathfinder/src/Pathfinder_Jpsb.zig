@@ -36,14 +36,14 @@ pub fn Init(allocator: std.mem.Allocator, map: *const JpsbMap) !Pathfinder_Jpsb 
 pub fn Search(
     this: *Pathfinder_Jpsb,
     allocator: std.mem.Allocator,
-    ax: i32,
-    ay: i32,
-    bx: i32,
-    by: i32,
+    sx: i32,
+    sy: i32,
+    gx: i32,
+    gy: i32,
     smoothMethod: E_SMOOTHMETHOD,
     resultNodes: *std.ArrayList(int2),
 ) anyerror!i32 {
-    const isFound = try this.jpsb.Search(allocator, ax, ay, bx, by, &this.pathBuffer);
+    const isFound = try this.jpsb.Search(allocator, sx, sy, gx, gy, &this.pathBuffer);
     if (!isFound) {
         return @intFromEnum(E_ERRORCODE.ERR_PATHFINDER_FAIL_TO_SEARCH);
     }
@@ -98,9 +98,9 @@ const Interface = struct {
         .vptr_EnsurePathbufferTotalCapacity = _vptr_EnsurePathbufferTotalCapacity,
     };
 
-    fn _vptr_Search(context: *anyopaque, allocator: std.mem.Allocator, ax: i32, ay: i32, bx: i32, by: i32, smoothMethod: E_SMOOTHMETHOD, resultNodes: *std.ArrayList(int2)) !i32 {
+    fn _vptr_Search(context: *anyopaque, allocator: std.mem.Allocator, sx: i32, sy: i32, gx: i32, gy: i32, smoothMethod: E_SMOOTHMETHOD, resultNodes: *std.ArrayList(int2)) !i32 {
         const this: *This = @ptrCast(@alignCast(context));
-        return this.Search(allocator, ax, ay, bx, by, smoothMethod, resultNodes);
+        return this.Search(allocator, sx, sy, gx, gy, smoothMethod, resultNodes);
     }
 
     fn _vptr_Deinit(context: *anyopaque, allocator: std.mem.Allocator) void {
