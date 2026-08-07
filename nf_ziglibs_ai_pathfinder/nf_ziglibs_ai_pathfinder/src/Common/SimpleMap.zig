@@ -101,6 +101,8 @@ pub const Map_bool = struct {
             .vptr_GetHeight = _vptr_GetHeight,
             .vptr_SetWallAt = _vptr_SetWallAt,
             .vptr_SetEmptyAt = _vptr_SetEmptyAt,
+            .vptr_IsWallAt = _vptr_IsWallAt,
+            .vptr_IsEmptyAt = _vptr_IsEmptyAt,
         };
 
         fn _vptr_GetWidth(context: *anyopaque) i32 {
@@ -121,6 +123,16 @@ pub const Map_bool = struct {
         fn _vptr_SetEmptyAt(context: *anyopaque, x: i32, y: i32, isEmpty: bool) void {
             const this: *This = @ptrCast(@alignCast(context));
             this.SetEmptyAt(x, y, isEmpty);
+        }
+
+        fn _vptr_IsWallAt(context: *anyopaque, x: i32, y: i32) bool {
+            const this: *This = @ptrCast(@alignCast(context));
+            return this.IsWallAt(x, y);
+        }
+
+        fn _vptr_IsEmptyAt(context: *anyopaque, x: i32, y: i32) bool {
+            const this: *This = @ptrCast(@alignCast(context));
+            return this.IsEmptyAt(x, y);
         }
     };
 };
