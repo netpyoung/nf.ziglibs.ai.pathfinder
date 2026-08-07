@@ -24,6 +24,8 @@ pub const Searcher = struct {
 
 pub const Common = struct {
     pub const Map_bool = @import("./Common/SimpleMap.zig").Map_bool;
+    pub const BresenhamPathSmoother = @import("./Common/BresenhamPathSmoother.zig").BresenhamPathSmoother;
+    pub const BresenhamPathSmoother_WithoutAlloc = @import("./Common/BresenhamPathSmoother.zig").BresenhamPathSmoother_WithoutAlloc;
 };
 
 pub const Loader = struct {
@@ -33,11 +35,7 @@ pub const Loader = struct {
 
 pub const exports = @import("./exports.zig");
 
-pub const E_SMOOTHMETHOD = enum(i32) {
-    NONE = 0,
-    BRESENHAM_THICKLINE = 1,
-    BRESENHAM_THINLINE = 2,
-};
+pub const E_SMOOTHMETHOD = exports.E_SMOOTHMETHOD;
 
 test {
     _ = @import("./Common/PriorityQueue.zig");

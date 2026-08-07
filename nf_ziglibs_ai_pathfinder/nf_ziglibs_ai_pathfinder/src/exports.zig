@@ -8,7 +8,12 @@ pub const Searcher_Jpsb = @import("./Jpsb/Searcher_Jpsb.zig");
 
 pub const Pathfinder_Jpsb = @import("./Pathfinder_Jpsb.zig");
 pub const IPathfinder = @import("./IPathfinder.zig");
-pub const E_SMOOTHMETHOD = @import("./root.zig").E_SMOOTHMETHOD;
+
+pub const E_SMOOTHMETHOD = enum(i32) {
+    NONE = 0,
+    BRESENHAM_THICKLINE = 1,
+    BRESENHAM_THINLINE = 2,
+};
 
 pub const E_ERRORCODE = enum(i32) {
     NONE = 0,
