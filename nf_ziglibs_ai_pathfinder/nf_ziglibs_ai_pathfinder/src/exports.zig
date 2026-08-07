@@ -167,13 +167,13 @@ pub export fn pf_pathfinder_find_path_with_smoothmethod(
     pathfinder: *IPathfinder,
     sx: i32,
     sy: i32,
-    ex: i32,
-    ey: i32,
+    gx: i32,
+    gy: i32,
     smoothmode: E_SMOOTHMETHOD,
     out_buf: [*]int2,
     max_len: i32,
 ) callconv(.c) i32 {
-    return _pf_pathfinder_find_path_with_smoothmethod(pathfinder, sx, sy, ex, ey, smoothmode, out_buf, max_len);
+    return _pf_pathfinder_find_path_with_smoothmethod(pathfinder, sx, sy, gx, gy, smoothmode, out_buf, max_len);
 }
 
 pub export fn pf_pathfinder_openlist_ensuretotalcapacity(pathfinder: *IPathfinder, capacity: u32) callconv(.c) i32 {

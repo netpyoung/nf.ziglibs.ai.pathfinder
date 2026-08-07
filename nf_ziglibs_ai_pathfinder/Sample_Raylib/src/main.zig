@@ -282,8 +282,8 @@ const Handler = struct {
     pub fn FillRandomMap(this: *Handler) void {
         const sx = this.start_pos.x;
         const sy = this.start_pos.y;
-        const ex = this.goal_pos.x;
-        const ey = this.goal_pos.y;
+        const gx = this.goal_pos.x;
+        const gy = this.goal_pos.y;
 
         var prng = std.Random.DefaultPrng.init(32);
         const rand = prng.random();
@@ -292,7 +292,7 @@ const Handler = struct {
                 if (x == sx and y == sy) {
                     continue;
                 }
-                if (x == ex and y == ey) {
+                if (x == gx and y == gy) {
                     continue;
                 }
                 // if (@rem(rand.int(i32), 10) == 0) {

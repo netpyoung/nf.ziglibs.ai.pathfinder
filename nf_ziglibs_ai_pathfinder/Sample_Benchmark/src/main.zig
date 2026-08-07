@@ -166,9 +166,9 @@ pub fn main(init: std.process.Init) !void {
             for (scenario.experiments.items, 0..) |experiment, idx| {
                 const sx: i32 = experiment.start_x;
                 const sy: i32 = experiment.start_y;
-                const ex: i32 = experiment.goal_x;
-                const ey: i32 = experiment.goal_y;
-                const isSuccess = try searchers[i].Search(allocator, sx, sy, ex, ey, &resultNodesArr[i]);
+                const gx: i32 = experiment.goal_x;
+                const gy: i32 = experiment.goal_y;
+                const isSuccess = try searchers[i].Search(allocator, sx, sy, gx, gy, &resultNodesArr[i]);
                 if (!isSuccess) {
                     std.log.err("{f}", .{experiment});
                     std.log.err("WTF!!! name:{s} idx:{} \n", .{ name, idx });
