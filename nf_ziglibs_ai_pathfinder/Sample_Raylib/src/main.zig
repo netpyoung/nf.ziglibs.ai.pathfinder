@@ -244,13 +244,6 @@ const Handler = struct {
     goal_pos: int2,
     drag_mode: E_DRAG_MODE,
 
-    const E_TILE_TYPE = enum {
-        TILE_EMPTY,
-        TILE_WALL,
-        TILE_START,
-        TILE_GOAL,
-    };
-
     const E_DRAG_MODE = enum {
         NONE,
         WALL_SET,
@@ -323,16 +316,16 @@ const Handler = struct {
 
         std.log.debug("{}", .{this.resultNodes.items.len});
 
-        this.RefreshMap();
+        this._RefreshMap();
     }
 
-    fn RefreshMap(this: *Handler) void {
-        PaintMap(&this.mesh, this.map);
-        PaintPath(&this.mesh, this.start_pos, this.goal_pos, this.resultNodes);
+    fn _RefreshMap(this: *Handler) void {
+        _PaintMap(&this.mesh, this.map);
+        _PaintPath(&this.mesh, this.start_pos, this.goal_pos, this.resultNodes);
         UpdateMeshColor(&this.mesh);
     }
 
-    fn PaintPath(mesh: *Raylib.Mesh, start_pos: int2, goal_pos: int2, path: *const std.ArrayList(int2)) void {
+    fn _PaintPath(mesh: *Raylib.Mesh, start_pos: int2, goal_pos: int2, path: *const std.ArrayList(int2)) void {
         for (path.items) |node| {
             SetMeshTileColor(mesh, node.x, node.y, COLOR_PATH);
         }
@@ -341,7 +334,7 @@ const Handler = struct {
         SetMeshTileColor(mesh, goal_pos.x, goal_pos.y, COLOR_GOAL);
     }
 
-    fn PaintMap(mesh: *Raylib.Mesh, map: *const pf.Jpsb.JpsbMap) void {
+    fn _PaintMap(mesh: *Raylib.Mesh, map: *const pf.Jpsb.JpsbMap) void {
         for (0..@intCast(map.height)) |y| {
             for (0..@intCast(map.width)) |x| {
                 if (map.IsWallAt(@intCast(x), @intCast(y))) {
@@ -365,14 +358,7 @@ const Handler = struct {
         }
 
         if (Raylib.isMouseButtonPressed(.left)) {
-            const current_tile = this._GetTileType(tile_x, tile_y);
-
-            this.drag_mode = switch (current_tile) {
-                .TILE_EMPTY => .WALL_SET,
-                .TILE_WALL => .WALL_CLEAR,
-                .TILE_START => .MOVE_START,
-                .TILE_GOAL => .MOVE_GOAL,
-            };
+            this.drag_mode = this._GetDragMode(tile_x, tile_y);
         } else if (Raylib.isMouseButtonDown(.left)) {
             const p = int2.Init(tile_x, tile_y);
             switch (this.drag_mode) {
@@ -381,7 +367,7 @@ const Handler = struct {
                     if (p != this.start_pos and p != this.goal_pos) {
                         this.resultNodes.clearRetainingCapacity();
                         this.map.SetWallAt(p.x, p.y, true);
-                        this.RefreshMap();
+                        this._RefreshMap();
                     }
                 },
                 .WALL_CLEAR => {
@@ -389,7 +375,7 @@ const Handler = struct {
                         this.resultNodes.clearRetainingCapacity();
 
                         this.map.SetEmptyAt(p.x, p.y, true);
-                        this.RefreshMap();
+                        this._RefreshMap();
                     }
                 },
                 .MOVE_START => {
@@ -397,7 +383,7 @@ const Handler = struct {
                         this.resultNodes.clearRetainingCapacity();
 
                         this.start_pos = .Init(tile_x, tile_y);
-                        this.RefreshMap();
+                        this._RefreshMap();
                     }
                 },
                 .MOVE_GOAL => {
@@ -405,7 +391,7 @@ const Handler = struct {
                         this.resultNodes.clearRetainingCapacity();
 
                         this.goal_pos = .Init(tile_x, tile_y);
-                        this.RefreshMap();
+                        this._RefreshMap();
                     }
                 },
             }
@@ -414,20 +400,20 @@ const Handler = struct {
         }
     }
 
-    fn _GetTileType(this: *const Handler, x: i32, y: i32) E_TILE_TYPE {
+    fn _GetDragMode(this: *const Handler, x: i32, y: i32) E_DRAG_MODE {
         const p = int2.Init(x, y);
         if (p == this.start_pos) {
-            return .TILE_START;
+            return .MOVE_START;
         }
 
         if (p == this.goal_pos) {
-            return .TILE_GOAL;
+            return .MOVE_GOAL;
         }
 
         if (this.map.IsWallAt(x, y)) {
-            return .TILE_WALL;
+            return .WALL_CLEAR;
         } else {
-            return .TILE_EMPTY;
+            return .WALL_SET;
         }
 
         unreachable;
