@@ -62,6 +62,8 @@ pub fn Deinit(this: *Searcher_Jpsb, allocator: std.mem.Allocator) void {
 }
 
 pub fn Search(this: *Searcher_Jpsb, allocator: std.mem.Allocator, ax: i32, ay: i32, bx: i32, by: i32, pathBuffer: *std.ArrayList(int2)) !bool {
+    pathBuffer.clearRetainingCapacity();
+
     const startp = int2.Init(ax, ay);
     const goalP = int2.Init(bx, by);
     const goalNodeOrNull = try this._TryFind(allocator, startp, goalP);
@@ -69,7 +71,6 @@ pub fn Search(this: *Searcher_Jpsb, allocator: std.mem.Allocator, ax: i32, ay: i
         return false;
     }
 
-    pathBuffer.clearRetainingCapacity();
     var node = goalNodeOrNull.?;
     while (true) {
         try pathBuffer.append(allocator, node.Pos);
