@@ -121,6 +121,22 @@ pub export fn pf_jpsb_map_set_empty_at(map: *JpsbMap, x: i32, y: i32, isEmpty: b
     map.SetEmptyAt(x, y, isEmpty);
 }
 
+pub export fn pf_jpsb_map_is_wall_at(map: *const JpsbMap, x: i32, y: i32) callconv(.c) bool {
+    return map.IsWallAt(x, y);
+}
+
+pub export fn pf_jpsb_map_is_empty_at(map: *const JpsbMap, x: i32, y: i32) callconv(.c) bool {
+    return map.IsEmptyAt(x, y);
+}
+
+pub export fn pf_jpsb_map_get_width(map: *const JpsbMap) callconv(.c) i32 {
+    return map.width;
+}
+
+pub export fn pf_jpsb_map_get_height(map: *const JpsbMap) callconv(.c) i32 {
+    return map.height;
+}
+
 // =========================================
 // pf_jpsb_pathfinder_
 // =========================================
