@@ -1,24 +1,26 @@
 ﻿const std = @import("std");
-const rl = @import("raylib");
-const gui = @import("raygui");
+
+const Raylib = @import("raylib");
+const RaylibGui = @import("raygui");
 
 const Timer = @import("./Timer.zig");
 
 const pf = @import("nf_ziglibs_ai_pathfinder");
 const int2 = pf.int2;
-const IMap = pf.IMap;
 
 const print = std.debug.print;
 
-const COLOR_EMPTY = rl.Color.light_gray;
-const COLOR_WALL = rl.Color.init(100, 100, 100, 255);
-const COLOR_CLOSED = rl.Color.init(200, 250, 250, 255);
-const COLOR_OPENED = rl.Color.init(200, 250, 200, 255);
-const COLOR_PATH = rl.Color.init(250, 200, 200, 255);
-const COLOR_LINE = rl.Color.yellow;
-const COLOR_START = rl.Color.green;
-const COLOR_GOAL = rl.Color.red;
+const COLOR_EMPTY = Raylib.Color.light_gray;
+const COLOR_WALL = Raylib.Color.init(100, 100, 100, 255);
+const COLOR_CLOSED = Raylib.Color.init(200, 250, 250, 255);
+const COLOR_OPENED = Raylib.Color.init(200, 250, 200, 255);
+const COLOR_PATH = Raylib.Color.init(250, 200, 200, 255);
+const COLOR_LINE = Raylib.Color.yellow;
+const COLOR_START = Raylib.Color.green;
+const COLOR_GOAL = Raylib.Color.red;
 
+const SCREEN_WIDTH = 800;
+const SCREEN_HEIGHT = 450;
 const MAP_WIDTH: c_int = 20;
 const MAP_HEIGHT: c_int = 20;
 const TILE_SIZE: f32 = 16.0;
@@ -26,196 +28,81 @@ const TILE_SIZE: f32 = 16.0;
 pub fn main(init: std.process.Init) !void {
     const allocator = init.gpa;
 
-    const screenWidth = 800;
-    const screenHeight = 450;
+    var jpsb_map = try pf.Jpsb.JpsbMap.Init(allocator, MAP_WIDTH, MAP_HEIGHT);
+    defer jpsb_map.Deinit(allocator);
 
-    rl.setConfigFlags(.{ .window_resizable = true, .window_highdpi = true });
+    var jpsb_searcher = try pf.Searcher.Searcher_Jpsb.Init(allocator, &jpsb_map);
+    defer jpsb_searcher.Deinit(allocator);
 
-    rl.initWindow(screenWidth, screenHeight, "raylib-zig [core] example - basic window");
-    defer rl.closeWindow();
-
-    const default_material = try rl.loadMaterialDefault();
-
-    var map_mesh = createStaticTilemapMesh(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE);
-    defer rl.unloadMesh(map_mesh);
-
-    var camera: rl.Camera2D = std.mem.zeroes(rl.Camera2D);
-    camera.zoom = 1.0;
-
-    rl.setTargetFPS(60);
-
-    var map = try pf.Jpsb.JpsbMap.Init(allocator, MAP_WIDTH, MAP_HEIGHT);
-    defer map.Deinit(allocator);
-    var handler: MapHandler = undefined;
-    {
-        var sx: i32 = 0;
-        var sy: i32 = 0;
-        var gx: i32 = 0;
-        var gy: i32 = 0;
-
-        sx = 0;
-        sy = 0;
-        gx = map.width - 2;
-        gy = map.height - 2;
-
-        //    map.SetWallAt(1, 1, true);
-        //    map.SetWallAt(1, 2, true);
-        FillMap(map.ToIMap(), sx, sy, gx, gy);
-        handler = MapHandler.Init(map.ToIMap(), TILE_SIZE, sx, sy, gx, gy);
-    }
-
-    var searcher_jpsb = try pf.Searcher.Searcher_Jpsb.Init(allocator, &map);
-    defer searcher_jpsb.Deinit(allocator);
-    var searcher = searcher_jpsb.ToISearcher();
     var resultNodes: std.ArrayList(int2) = .empty;
     defer resultNodes.deinit(allocator);
 
-    {
-        const sx = handler.start_pos.x;
-        const sy = handler.start_pos.y;
-        const gx = handler.goal_pos.x;
-        const gy = handler.goal_pos.y;
+    Raylib.setConfigFlags(.{ .window_resizable = true, .window_highdpi = true });
 
-        var timer = Timer.Init("hello", init.io);
-        timer.Start();
-        const isSuccess = try searcher.Search(allocator, sx, sy, gx, gy, &resultNodes);
-        std.debug.assert(isSuccess);
-        _ = timer.Stop();
+    Raylib.initWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "jps(b) test");
+    defer Raylib.closeWindow();
 
-        std.log.debug("{}", .{resultNodes.items.len});
+    Raylib.setTargetFPS(60);
 
-        RenderMap(&map_mesh, map.ToIMap());
-        RenderPath(&map_mesh, &resultNodes);
-        UpdateMeshColor(&map_mesh);
-    }
+    const map_mesh = CreateStaticTilemapMesh(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE);
+    defer Raylib.unloadMesh(map_mesh);
 
-    var isSearchPressed = false;
-    while (!rl.windowShouldClose()) {
-        if (isSearchPressed) {
-            var timer = Timer.Init("hello", init.io);
-            timer.Start();
-            const sx = handler.start_pos.x;
-            const sy = handler.start_pos.y;
-            const gx = handler.goal_pos.x;
-            const gy = handler.goal_pos.y;
-            const isSuccess = try searcher.Search(allocator, sx, sy, gx, gy, &resultNodes);
-            std.log.debug("isSuccess = {}", .{isSuccess});
-            _ = timer.Stop();
+    var handler = Handler.Init(
+        &jpsb_searcher,
+        &jpsb_map,
+        &resultNodes,
+        map_mesh,
+        TILE_SIZE,
+        int2.Init(0, 0),
+        int2.Init(MAP_WIDTH - 1, MAP_HEIGHT - 1),
+    );
+    handler.FillRandomMap();
+    try handler.DoSearch(allocator, init.io);
 
-            std.log.debug("{}", .{resultNodes.items.len});
-            RenderMap(&map_mesh, map.ToIMap());
-            RenderPath(&map_mesh, &resultNodes);
-            UpdateMeshColor(&map_mesh);
+    const renderer = try Renderer.Init(&handler);
+
+    var isBtnSearchPressed = false;
+    while (!Raylib.windowShouldClose()) {
+        if (isBtnSearchPressed) {
+            try handler.DoSearch(allocator, init.io);
         }
 
-        //        if (rl.isMouseButtonDown(rl.MouseButton.left)) {
-        //            const world_pos = rl.getScreenToWorld2D(rl.getMousePosition(), camera);
-        //            const tile_x: i32 = @intFromFloat(world_pos.x / TILE_SIZE);
-        //            const tile_y: i32 = @intFromFloat(world_pos.y / TILE_SIZE);
-        //
-        //            setTileColor(&map_mesh, tile_x, tile_y, .green);
-        // UpdateMeshColor(&map_mesh);
-        //        }
-
-        handler.handleInput(camera, &map_mesh);
+        handler.handleInput();
 
         {
-            rl.beginDrawing();
+            Raylib.beginDrawing();
 
-            rl.clearBackground(.black);
+            Raylib.clearBackground(.black);
 
             {
-                rl.beginMode2D(camera);
-                rl.drawMesh(map_mesh, default_material, rl.Matrix.identity());
-                rl.endMode2D();
+                renderer.Render();
             }
 
-            RenderLine(&resultNodes);
+            Raylib.drawFPS(10, 10);
+            isBtnSearchPressed = RaylibGui.button(.{ .x = SCREEN_WIDTH / 2 - 50, .y = 10, .width = 100, .height = 30 }, "Search");
+            //            RaylibGui.dropdownBox
 
-            rl.drawFPS(10, 10);
-            isSearchPressed = gui.button(.{ .x = screenWidth / 2 - 50, .y = 10, .width = 100, .height = 50 }, "asdf");
-
-            rl.endDrawing();
+            Raylib.endDrawing();
         }
     }
 }
 
-fn RenderPath(mesh: *rl.Mesh, path: *const std.ArrayList(int2)) void {
-    for (path.items, 0..) |node, i| {
-        std.log.debug("{}", .{node});
+// ================================================================
 
-        if (i == 0) {
-            setTileColor(mesh, node.x, node.y, COLOR_START);
-        } else if (i == path.items.len - 1) {
-            setTileColor(mesh, node.x, node.y, COLOR_GOAL);
-        } else {
-            setTileColor(mesh, node.x, node.y, COLOR_PATH);
-        }
-    }
-}
-
-fn RenderMap(mesh: *rl.Mesh, map: IMap) void {
-    for (0..@intCast(map.GetHeight())) |y| {
-        for (0..@intCast(map.GetWidth())) |x| {
-            if (map.IsWallAt(@intCast(x), @intCast(y))) {
-                setTileColor(mesh, @intCast(x), @intCast(y), COLOR_WALL);
-            } else {
-                setTileColor(mesh, @intCast(x), @intCast(y), COLOR_EMPTY);
-            }
-        }
-    }
-}
-
-fn RenderLine(path: *const std.ArrayList(int2)) void {
-    if (path.items.len < 2) {
-        return;
-    }
-
-    const items = path.items;
-    var a: rl.Vector2 = undefined;
-    var b: rl.Vector2 = undefined;
-    for (items[0 .. items.len - 1], items[1..]) |p1, p2| {
-        a.x = @as(f32, @floatFromInt(p1.x)) * TILE_SIZE + TILE_SIZE / 2;
-        a.y = @as(f32, @floatFromInt(p1.y)) * TILE_SIZE + TILE_SIZE / 2;
-        b.x = @as(f32, @floatFromInt(p2.x)) * TILE_SIZE + TILE_SIZE / 2;
-        b.y = @as(f32, @floatFromInt(p2.y)) * TILE_SIZE + TILE_SIZE / 2;
-        rl.drawLineEx(a, b, 2, COLOR_LINE);
-    }
-}
-
-fn FillMap(map: IMap, sx: i32, sy: i32, ex: i32, ey: i32) void {
-    var prng = std.Random.DefaultPrng.init(32);
-    const rand = prng.random();
-    for (0..@intCast(map.GetHeight())) |y| {
-        for (0..@intCast(map.GetWidth())) |x| {
-            if (x == sx and y == sy) {
-                continue;
-            }
-            if (x == ex and y == ey) {
-                continue;
-            }
-            // if (@rem(rand.int(i32), 10) == 0) {
-            if (@rem(rand.int(i32), 10) == 0) {
-                map.SetWallAt(@intCast(x), @intCast(y), true);
-            }
-        }
-    }
-}
-
-fn createStaticTilemapMesh(map_width: i32, map_height: i32, tile_size: f32) rl.Mesh {
-    var mesh: rl.Mesh = std.mem.zeroes(rl.Mesh);
+fn CreateStaticTilemapMesh(map_width: i32, map_height: i32, tile_size: f32) Raylib.Mesh {
+    var mesh: Raylib.Mesh = std.mem.zeroes(Raylib.Mesh);
     const total_tiles: usize = @intCast(map_width * map_height);
 
     mesh.vertexCount = @intCast(total_tiles * 4);
     mesh.triangleCount = @intCast(total_tiles * 2);
 
-    const vertices_ptr = rl.memAlloc(@intCast(mesh.vertexCount * 3 * @sizeOf(f32)));
+    const vertices_ptr = Raylib.memAlloc(@intCast(mesh.vertexCount * 3 * @sizeOf(f32)));
     mesh.vertices = @ptrCast(@alignCast(vertices_ptr));
 
-    const colors_ptr = rl.memAlloc(@intCast(mesh.vertexCount * 4 * @sizeOf(u8)));
+    const colors_ptr = Raylib.memAlloc(@intCast(mesh.vertexCount * 4 * @sizeOf(u8)));
     mesh.colors = @ptrCast(@alignCast(colors_ptr));
 
-    const indices_ptr = rl.memAlloc(@intCast(mesh.triangleCount * 3 * @sizeOf(u16)));
+    const indices_ptr = Raylib.memAlloc(@intCast(mesh.triangleCount * 3 * @sizeOf(u16)));
     mesh.indices = @ptrCast(@alignCast(indices_ptr));
 
     var v_idx: usize = 0;
@@ -248,7 +135,7 @@ fn createStaticTilemapMesh(map_width: i32, map_height: i32, tile_size: f32) rl.M
             mesh.vertices[(v_idx + 3) * 3 + 2] = 0.0;
 
             for (0..4) |_| {
-                mesh.colors[c_idx] = 200; // R
+                mesh.colors[c_idx + 0] = 200; // R
                 mesh.colors[c_idx + 1] = 200; // G
                 mesh.colors[c_idx + 2] = 200; // B
                 mesh.colors[c_idx + 3] = 255; // A
@@ -267,26 +154,12 @@ fn createStaticTilemapMesh(map_width: i32, map_height: i32, tile_size: f32) rl.M
         }
     }
 
-    rl.uploadMesh(&mesh, true);
+    Raylib.uploadMesh(&mesh, true);
     return mesh;
 }
 
-fn setTileColor(mesh: *rl.Mesh, tile_x: i32, tile_y: i32, new_color: rl.Color) void {
-    if (tile_x < 0 or tile_x >= MAP_WIDTH or tile_y < 0 or tile_y >= MAP_HEIGHT) return;
-
-    const tile_index: usize = @intCast(tile_y * MAP_WIDTH + tile_x);
-    const color_offset = tile_index * 16;
-    var i: usize = 0;
-    while (i < 4) : (i += 1) {
-        mesh.colors[color_offset + i * 4 + 0] = new_color.r;
-        mesh.colors[color_offset + i * 4 + 1] = new_color.g;
-        mesh.colors[color_offset + i * 4 + 2] = new_color.b;
-        mesh.colors[color_offset + i * 4 + 3] = new_color.a;
-    }
-}
-
-inline fn UpdateMeshColor(mesh: *rl.Mesh) void {
-    rl.updateMeshBuffer(
+inline fn UpdateMeshColor(mesh: *Raylib.Mesh) void {
+    Raylib.updateMeshBuffer(
         mesh.*,
         3,
         mesh.colors,
@@ -295,11 +168,78 @@ inline fn UpdateMeshColor(mesh: *rl.Mesh) void {
     );
 }
 
-const MapHandler = struct {
+// ================================================================
+
+const Renderer = struct {
+    camera: Raylib.Camera2D,
+    handler: *Handler,
+    material: Raylib.Material,
+
+    pub fn Init(handler: *Handler) !Renderer {
+        var camera: Raylib.Camera2D = std.mem.zeroes(Raylib.Camera2D);
+        camera.zoom = 1.0;
+        const default_material = try Raylib.loadMaterialDefault();
+        return .{
+            .camera = camera,
+            .material = default_material,
+            .handler = handler,
+        };
+    }
+
+    pub fn Render(this: *const Renderer) void {
+        Raylib.beginMode2D(this.camera);
+        Raylib.drawMesh(this.handler.mesh, this.material, Raylib.Matrix.identity());
+        Raylib.endMode2D();
+        RenderLine(this.handler.resultNodes);
+    }
+
+    fn RenderLine(path: *const std.ArrayList(int2)) void {
+        if (path.items.len < 2) {
+            return;
+        }
+
+        const items = path.items;
+        var a: Raylib.Vector2 = undefined;
+        var b: Raylib.Vector2 = undefined;
+        for (items[0 .. items.len - 1], items[1..]) |p1, p2| {
+            a.x = @as(f32, @floatFromInt(p1.x)) * TILE_SIZE + TILE_SIZE / 2;
+            a.y = @as(f32, @floatFromInt(p1.y)) * TILE_SIZE + TILE_SIZE / 2;
+            b.x = @as(f32, @floatFromInt(p2.x)) * TILE_SIZE + TILE_SIZE / 2;
+            b.y = @as(f32, @floatFromInt(p2.y)) * TILE_SIZE + TILE_SIZE / 2;
+            Raylib.drawLineEx(a, b, 2, COLOR_LINE);
+        }
+    }
+};
+
+fn SetMeshTileColor(mesh: *Raylib.Mesh, tile_x: i32, tile_y: i32, color: Raylib.Color) void {
+    if (tile_x < 0 or MAP_WIDTH <= tile_x) {
+        return;
+    }
+    if (tile_y < 0 or MAP_HEIGHT <= tile_y) {
+        return;
+    }
+
+    const tile_index: usize = @intCast(tile_y * MAP_WIDTH + tile_x);
+    const color_offset = tile_index * 16;
+    var i: usize = 0;
+    while (i < 4) : (i += 1) {
+        mesh.colors[color_offset + i * 4 + 0] = color.r;
+        mesh.colors[color_offset + i * 4 + 1] = color.g;
+        mesh.colors[color_offset + i * 4 + 2] = color.b;
+        mesh.colors[color_offset + i * 4 + 3] = color.a;
+    }
+}
+
+// ================================================================
+const Handler = struct {
     width: i32,
     height: i32,
     tile_size: f32,
-    map: IMap,
+    searcher: *pf.Searcher.Searcher_Jpsb,
+    map: *pf.Jpsb.JpsbMap,
+    resultNodes: *std.ArrayList(int2),
+    mesh: Raylib.Mesh,
+    camera: Raylib.Camera2D,
     start_pos: int2,
     goal_pos: int2,
     drag_mode: E_DRAG_MODE,
@@ -319,21 +259,103 @@ const MapHandler = struct {
         MOVE_GOAL,
     };
 
-    pub fn Init(map: IMap, tile_size: f32, sx: i32, sy: i32, gx: i32, gy: i32) MapHandler {
+    pub fn Init(
+        searcher: *pf.Searcher.Searcher_Jpsb,
+        map: *pf.Jpsb.JpsbMap,
+        resultNodes: *std.ArrayList(int2),
+        mesh: Raylib.Mesh,
+        tile_size: f32,
+        start_pos: int2,
+        goal_pos: int2,
+    ) Handler {
+        var camera: Raylib.Camera2D = std.mem.zeroes(Raylib.Camera2D);
+        camera.zoom = 1.0;
+
         return .{
-            .width = map.GetWidth(),
-            .height = map.GetHeight(),
+            .width = map.width,
+            .height = map.height,
             .tile_size = tile_size,
+            .searcher = searcher,
             .map = map,
-            .start_pos = int2.Init(sx, sy),
-            .goal_pos = int2.Init(gx, gy),
+            .resultNodes = resultNodes,
+            .mesh = mesh,
+            .camera = camera,
+            .start_pos = start_pos,
+            .goal_pos = goal_pos,
             .drag_mode = .NONE,
         };
     }
 
-    pub fn handleInput(this: *MapHandler, camera: rl.Camera2D, mesh: *rl.Mesh) void {
-        const mouse_pos = rl.getMousePosition();
-        const world_pos = rl.getScreenToWorld2D(mouse_pos, camera);
+    pub fn FillRandomMap(this: *Handler) void {
+        const sx = this.start_pos.x;
+        const sy = this.start_pos.y;
+        const ex = this.goal_pos.x;
+        const ey = this.goal_pos.y;
+
+        var prng = std.Random.DefaultPrng.init(32);
+        const rand = prng.random();
+        for (0..@intCast(this.map.height)) |y| {
+            for (0..@intCast(this.map.width)) |x| {
+                if (x == sx and y == sy) {
+                    continue;
+                }
+                if (x == ex and y == ey) {
+                    continue;
+                }
+                // if (@rem(rand.int(i32), 10) == 0) {
+                if (@rem(rand.int(i32), 10) == 0) {
+                    this.map.SetWallAt(@intCast(x), @intCast(y), true);
+                }
+            }
+        }
+    }
+
+    pub fn DoSearch(this: *Handler, allocator: std.mem.Allocator, io: std.Io) !void {
+        var timer = Timer.Init("jps(b) search", io);
+        timer.Start();
+        const sx = this.start_pos.x;
+        const sy = this.start_pos.y;
+        const gx = this.goal_pos.x;
+        const gy = this.goal_pos.y;
+        const isSuccess = try this.searcher.Search(allocator, sx, sy, gx, gy, this.resultNodes);
+        std.log.debug("isSuccess = {}", .{isSuccess});
+        _ = timer.Stop();
+
+        std.log.debug("{}", .{this.resultNodes.items.len});
+
+        this.RefreshMap();
+    }
+
+    fn RefreshMap(this: *Handler) void {
+        PaintMap(&this.mesh, this.map);
+        PaintPath(&this.mesh, this.start_pos, this.goal_pos, this.resultNodes);
+        UpdateMeshColor(&this.mesh);
+    }
+
+    fn PaintPath(mesh: *Raylib.Mesh, start_pos: int2, goal_pos: int2, path: *const std.ArrayList(int2)) void {
+        for (path.items) |node| {
+            SetMeshTileColor(mesh, node.x, node.y, COLOR_PATH);
+        }
+
+        SetMeshTileColor(mesh, start_pos.x, start_pos.y, COLOR_START);
+        SetMeshTileColor(mesh, goal_pos.x, goal_pos.y, COLOR_GOAL);
+    }
+
+    fn PaintMap(mesh: *Raylib.Mesh, map: *const pf.Jpsb.JpsbMap) void {
+        for (0..@intCast(map.height)) |y| {
+            for (0..@intCast(map.width)) |x| {
+                if (map.IsWallAt(@intCast(x), @intCast(y))) {
+                    SetMeshTileColor(mesh, @intCast(x), @intCast(y), COLOR_WALL);
+                } else {
+                    SetMeshTileColor(mesh, @intCast(x), @intCast(y), COLOR_EMPTY);
+                }
+            }
+        }
+    }
+
+    pub fn handleInput(this: *Handler) void {
+        const mouse_pos = Raylib.getMousePosition();
+        const world_pos = Raylib.getScreenToWorld2D(mouse_pos, this.camera);
 
         const tile_x: i32 = @intFromFloat(world_pos.x / this.tile_size);
         const tile_y: i32 = @intFromFloat(world_pos.y / this.tile_size);
@@ -342,8 +364,8 @@ const MapHandler = struct {
             return;
         }
 
-        if (rl.isMouseButtonPressed(.left)) {
-            const current_tile = this.getTileType(tile_x, tile_y);
+        if (Raylib.isMouseButtonPressed(.left)) {
+            const current_tile = this._GetTileType(tile_x, tile_y);
 
             this.drag_mode = switch (current_tile) {
                 .TILE_EMPTY => .WALL_SET,
@@ -351,58 +373,48 @@ const MapHandler = struct {
                 .TILE_START => .MOVE_START,
                 .TILE_GOAL => .MOVE_GOAL,
             };
-        } else if (rl.isMouseButtonDown(.left)) {
+        } else if (Raylib.isMouseButtonDown(.left)) {
+            const p = int2.Init(tile_x, tile_y);
             switch (this.drag_mode) {
                 .NONE => {},
                 .WALL_SET => {
-                    if (!this.isStartOrGoal(tile_x, tile_y)) {
-                        this.setTileAndColor(mesh, tile_x, tile_y, .TILE_WALL, COLOR_WALL);
+                    if (p != this.start_pos and p != this.goal_pos) {
+                        this.resultNodes.clearRetainingCapacity();
+                        this.map.SetWallAt(p.x, p.y, true);
+                        this.RefreshMap();
                     }
                 },
                 .WALL_CLEAR => {
-                    if (!this.isStartOrGoal(tile_x, tile_y)) {
-                        this.setTileAndColor(mesh, tile_x, tile_y, .TILE_EMPTY, COLOR_EMPTY);
+                    if (p != this.start_pos and p != this.goal_pos) {
+                        this.resultNodes.clearRetainingCapacity();
+
+                        this.map.SetEmptyAt(p.x, p.y, true);
+                        this.RefreshMap();
                     }
                 },
                 .MOVE_START => {
-                    if (!this.isGoal(tile_x, tile_y) and (tile_x != this.start_pos.x or tile_y != this.start_pos.y)) {
-                        this.setTileAndColor(mesh, this.start_pos.x, this.start_pos.y, .TILE_EMPTY, COLOR_EMPTY);
+                    if (p != this.start_pos and p != this.goal_pos) {
+                        this.resultNodes.clearRetainingCapacity();
 
                         this.start_pos = .Init(tile_x, tile_y);
-                        this.setTileAndColor(mesh, tile_x, tile_y, .TILE_START, COLOR_START);
+                        this.RefreshMap();
                     }
                 },
                 .MOVE_GOAL => {
-                    if (!this.isStart(tile_x, tile_y) and (tile_x != this.goal_pos.x or tile_y != this.goal_pos.y)) {
-                        this.setTileAndColor(mesh, this.goal_pos.x, this.goal_pos.y, .TILE_EMPTY, COLOR_EMPTY);
+                    if (p != this.start_pos and p != this.goal_pos) {
+                        this.resultNodes.clearRetainingCapacity();
 
                         this.goal_pos = .Init(tile_x, tile_y);
-                        this.setTileAndColor(mesh, tile_x, tile_y, .TILE_GOAL, COLOR_GOAL);
+                        this.RefreshMap();
                     }
                 },
             }
-        } else if (rl.isMouseButtonReleased(.left)) {
+        } else if (Raylib.isMouseButtonReleased(.left)) {
             this.drag_mode = .NONE;
         }
-
-        UpdateMeshColor(mesh);
     }
 
-    fn isStart(this: *const MapHandler, x: i32, y: i32) bool {
-        const p = int2.Init(x, y);
-        return p == this.start_pos;
-    }
-
-    fn isGoal(this: *const MapHandler, x: i32, y: i32) bool {
-        const p = int2.Init(x, y);
-        return p == this.goal_pos;
-    }
-
-    fn isStartOrGoal(this: *const MapHandler, x: i32, y: i32) bool {
-        return this.isStart(x, y) or this.isGoal(x, y);
-    }
-
-    fn getTileType(this: *const MapHandler, x: i32, y: i32) E_TILE_TYPE {
+    fn _GetTileType(this: *const Handler, x: i32, y: i32) E_TILE_TYPE {
         const p = int2.Init(x, y);
         if (p == this.start_pos) {
             return .TILE_START;
@@ -419,23 +431,5 @@ const MapHandler = struct {
         }
 
         unreachable;
-    }
-
-    fn setTileAndColor(this: *MapHandler, mesh: *rl.Mesh, x: i32, y: i32, tile_type: E_TILE_TYPE, color: rl.Color) void {
-        switch (tile_type) {
-            .TILE_EMPTY => {
-                this.map.SetEmptyAt(x, y, true);
-            },
-            .TILE_WALL => {
-                this.map.SetWallAt(x, y, true);
-            },
-            .TILE_START => {
-                this.start_pos = int2.Init(x, y);
-            },
-            .TILE_GOAL => {
-                this.goal_pos = int2.Init(x, y);
-            },
-        }
-        setTileColor(mesh, x, y, color);
     }
 };
