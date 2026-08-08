@@ -13,15 +13,15 @@
 	</ItemGroup>
 
 	<PropertyGroup Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))">
-		<NativeLibPath>$(ProjectDir)..\..\..\__BUILD\windows\nf_ziglibs_ai_pathfinder.dll</NativeLibPath>
+		<NativeLibPath>$(ProjectDir)..\..\..\__BUILD\windows_x86_64\nf_ziglibs_ai_pathfinder.dll</NativeLibPath>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))">
-		<NativeLibPath>$(ProjectDir)..\..\..\__BUILD\linux\libnf_ziglibs_ai_pathfinder.so</NativeLibPath>
+		<NativeLibPath>$(ProjectDir)..\..\..\__BUILD\linux_x86_64\libnf_ziglibs_ai_pathfinder.so</NativeLibPath>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))">
-		<NativeLibPath>$(ProjectDir)..\..\..\__BUILD\macos\libnf_ziglibs_ai_pathfinder.dylib</NativeLibPath>
+		<NativeLibPath>$(ProjectDir)..\..\..\__BUILD\macos_aarch64\libnf_ziglibs_ai_pathfinder.dylib</NativeLibPath>
 	</PropertyGroup>
 
 	<Target Name="CopyNativeDlls" AfterTargets="Build">
