@@ -12,6 +12,10 @@
 		<ProjectReference Include="..\NF.Dotnetlibs.AI.Pathfinder\NF.Dotnetlibs.AI.Pathfinder.csproj" />
 	</ItemGroup>
 
+	<Target Name="CopyNativeDlls" AfterTargets="Build">
+		<Copy SourceFiles="$(ProjectDir)..\..\..\__BUILD\windows\nf_ziglibs_ai_pathfinder.dll" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+	</Target>
+
 	<ItemGroup>
 		<PackageReference Include="coverlet.collector" Version="10.0.1">
 			<PrivateAssets>all</PrivateAssets>
