@@ -1,5 +1,8 @@
 const std = @import("std");
 const Order = std.math.Order;
+pub const Error = error{
+    NodeNotFound,
+};
 
 pub fn IndexedHeap_Binary(
     comptime T: type,
@@ -64,7 +67,7 @@ pub fn IndexedHeap_Binary(
             const heapIndex = getHeapIndexRefFn(node).*;
 
             if (heapIndex == INVALID_INDEX or heapIndex >= this._arraylist.items.len) {
-                return error.NodeNotFound;
+                return Error.NodeNotFound;
             }
 
             this._SiftUp(@intCast(heapIndex));
@@ -201,7 +204,7 @@ pub fn IndexedHeap_4ary(
             const heapIndex = getHeapIndexRefFn(node).*;
 
             if (heapIndex == INVALID_INDEX or heapIndex >= this._arraylist.items.len) {
-                return error.NodeNotFound;
+                return Error.NodeNotFound;
             }
 
             this._SiftUp(@intCast(heapIndex));
