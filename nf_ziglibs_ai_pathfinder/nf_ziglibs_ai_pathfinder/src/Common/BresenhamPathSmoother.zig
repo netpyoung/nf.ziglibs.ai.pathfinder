@@ -249,7 +249,7 @@ pub fn BresenhamPathSmoother_WithoutAlloc(comptime Context: type, comptime fnIsW
             return false;
         }
 
-        pub fn Smooth_Thickline_WithoutAlloc(this: @This(), path: []int2, ret: *std.ArrayList(int2)) !void {
+        pub fn Smooth_Thickline_WithoutAlloc(this: @This(), path: []int2, ret: *std.ArrayList(int2)) void {
             if (path.len <= 2) {
                 for (path) |p| {
                     ret.appendAssumeCapacity(p);
@@ -276,7 +276,7 @@ pub fn BresenhamPathSmoother_WithoutAlloc(comptime Context: type, comptime fnIsW
             }
         }
 
-        pub fn Smooth_Thinline_WithoutAlloc(this: @This(), path: []int2, ret: *std.ArrayList(int2)) !void {
+        pub fn Smooth_Thinline_WithoutAlloc(this: @This(), path: []int2, ret: *std.ArrayList(int2)) void {
             if (path.len <= 2) {
                 for (path) |p| {
                     ret.appendAssumeCapacity(p);
