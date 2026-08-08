@@ -1,63 +1,47 @@
 # https://just.systems
 
+[private]
 default:
-    echo 'Hello, world!'
+    @just --list
 
+[group('build')]
 [working-directory: 'nf_ziglibs_ai_pathfinder/nf_ziglibs_ai_pathfinder']
 build-windows:
-    zig build -Doptimize=ReleaseFast -Ddynamic -Dtarget=x86_64-windows-msvc
-    mkdir -p ../../__BUILD/windows
-    cp  zig-out/bin/nf_ziglibs_ai_pathfinder.dll ../../__BUILD/windows/
+    zig build windows -Doptimize=ReleaseFast
+    mkdir -p ../../__BUILD/
+    cp  -r zig-out/* ../../__BUILD/
 
-[working-directory: 'nf_ziglibs_ai_pathfinder/nf_ziglibs_ai_pathfinder']
-build-wasm:
-    # zig build -Doptimize=ReleaseFast -Dtarget=wasm32-freestanding -freference-trace=16
-    zig build -Doptimize=ReleaseFast -Dtarget=wasm32-freestanding
-    mkdir -p ../../__BUILD/wasm
-    cp  zig-out/lib/libnf_ziglibs_ai_pathfinder.a ../../__BUILD/wasm/
-
-
-[working-directory: 'nf_ziglibs_ai_pathfinder/nf_ziglibs_ai_pathfinder']
-build-android:
-    zig build -Doptimize=ReleaseFast  -Ddynamic -Dtarget=aarch64-linux-android
-    mkdir -p ../../__BUILD/android/
-    cp  zig-out/lib/libnf_ziglibs_ai_pathfinder.so ../../__BUILD/android/
-
-
-[working-directory: 'nf_ziglibs_ai_pathfinder/nf_ziglibs_ai_pathfinder']
-build-ios:
-    zig build -Doptimize=ReleaseFast -Dtarget=aarch64-ios
-    mkdir -p ../../__BUILD/iOs/
-    cp  zig-out/lib/libnf_ziglibs_ai_pathfinder.a ../../__BUILD/iOs/
-
+[group('build')]
 [working-directory: 'nf_ziglibs_ai_pathfinder/nf_ziglibs_ai_pathfinder']
 build-linux:
-    zig build -Doptimize=ReleaseFast -Ddynamic -Dtarget=x86_64-linux
-    mkdir -p ../../__BUILD/linux/
-    zig-out/lib/libnf_ziglibs_ai_pathfinder.so ../../__BUILD/linux/
+    zig build linux -Doptimize=ReleaseFast
+    mkdir -p ../../__BUILD/
+    cp  -r zig-out/* ../../__BUILD/
 
+[group('build')]
 [working-directory: 'nf_ziglibs_ai_pathfinder/nf_ziglibs_ai_pathfinder']
-build-mac:
-    zig build -Doptimize=ReleaseFast -Ddynamic -Dtarget=native-macos
-    mkdir -p ../../__BUILD/macOs/
-    cp  zig-out/lib/libnf_ziglibs_ai_pathfinder.dylib ../../__BUILD/macOs/
+build-macos:
+    zig build macos -Doptimize=ReleaseFast
+    mkdir -p ../../__BUILD/
+    cp  -r zig-out/* ../../__BUILD/
 
+[group('build')]
+[working-directory: 'nf_ziglibs_ai_pathfinder/nf_ziglibs_ai_pathfinder']
+build-all:
+    zig build all -Doptimize=ReleaseFast
+    mkdir -p ../../__BUILD/
+    cp  -r zig-out/* ../../__BUILD/
 
-
-
-
-
-
-build-lib: build-windows
-
-
+[group('test')]
 [working-directory: 'nf_ziglibs_ai_pathfinder/nf_ziglibs_ai_pathfinder']
 test-zig:
     zig build test
 
+[group('test')]
 [working-directory: 'interop/interop-dotnet/Dotnet_Test']
 test-dotnet:
     dotnet test
 
+[group('test')]
 test-all : test-zig test-dotnet
 
