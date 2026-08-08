@@ -1,0 +1,20 @@
+{
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+
+        "__BUILD": true,
+        "__MAP": true,
+        
+        "**/.vs": true,
+        "**/TestResults": true,
+        "**/.zig-cache": true,
+        "**/zig-out": true,
+        "**/zig-pkg": true,
+        "**/int": true,
+        "**/out": true,
+    }
+}
