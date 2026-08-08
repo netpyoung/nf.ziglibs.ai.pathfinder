@@ -1,0 +1,109 @@
+name: Upload Test
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/upload-test.yml'
+      - 'nf_ziglibs_ai_pathfinder/nf_ziglibs_ai_pathfinder/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/upload-test.yml'
+      - 'nf_ziglibs_ai_pathfinder/nf_ziglibs_ai_pathfinder/**'
+
+jobs:
+  upload_test:
+    name: Upload Test
+
+    # ref: availabel image - https://github.com/actions/runner-images
+    runs-on: macos-latest
+
+    steps:
+      # https://github.com/actions/checkout
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      # https://codeberg.org/mlugg/setup-zig/
+      - name: Setup Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.16.0
+
+      # https://github.com/extractions/setup-just
+      - name: Setup Just
+        uses: extractions/setup-just@v4
+
+      - name: build library
+        working-directory: nf_ziglibs_ai_pathfinder/nf_ziglibs_ai_pathfinder
+        run: |
+          zig build all -Doptimize=ReleaseFast --summary all --color off
+          mkdir -p ../../__BUILD/
+          cp  -r zig-out/* ../../__BUILD/
+
+      - name: postprocess-apple
+        run: |
+          just postprocess-apple
+          
+      # https://github.com/actions/upload-artifact
+      - name: 🎁⏫ Upload Artifact - windows
+        uses: actions/upload-artifact@v7
+        with:
+          name: artifact-windows
+          path: |
+            __BUILD/windows_*
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
+      - name: 🎁⏫ Upload Artifact - linux
+        uses: actions/upload-artifact@v7
+        with:
+          name: artifact-linux
+          path: |
+            __BUILD/linux_*
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
+      - name: 🎁⏫ Upload Artifact - macos
+        uses: actions/upload-artifact@v7
+        with:
+          name: artifact-macos
+          path: |
+            __BUILD/macos_*
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
+      - name: 🎁⏫ Upload Artifact - macos-xcframework
+        uses: actions/upload-artifact@v7
+        with:
+          name: artifact-macos-xcframework
+          path: |
+            __BUILD/libnf_ziglibs_ai_pathfinder.xcframework*
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
+      - name: 🎁⏫ Upload Artifact - android
+        uses: actions/upload-artifact@v7
+        with:
+          name: artifact-android
+          path: |
+            __BUILD/android_*
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
+      - name: 🎁⏫ Upload Artifact - wasm
+        uses: actions/upload-artifact@v7
+        with:
+          name: artifact-wasm
+          path: |
+            __BUILD/freestanding_wasm*
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
