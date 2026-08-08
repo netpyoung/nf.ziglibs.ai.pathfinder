@@ -44,9 +44,9 @@ jobs:
       - name: build lib
         working-directory: nf_ziglibs_ai_pathfinder/nf_ziglibs_ai_pathfinder
         run: |
-          zig build -Doptimize=ReleaseFast -Ddynamic -Dtarget=x86_64-linux
-          mkdir -p ../../__BUILD/linux
-          cp zig-out/lib/libnf_ziglibs_ai_pathfinder.so ../../__BUILD/linux
+          zig build linux -Doptimize=ReleaseFast
+          mkdir -p ../../__BUILD/
+          cp  -r zig-out/* ../../__BUILD/
 
       - name: Run .NET Tests
         working-directory: interop/interop-dotnet
