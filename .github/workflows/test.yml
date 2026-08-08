@@ -1,0 +1,55 @@
+name: Run Tests
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/test.yml'
+      - 'nf_ziglibs_ai_pathfinder/nf_ziglibs_ai_pathfinder/**'
+      - 'interop/interop-dotnet/Dotnet_Test/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/test.yml'
+      - 'nf_ziglibs_ai_pathfinder/nf_ziglibs_ai_pathfinder/**'
+      - 'interop/interop-dotnet/Dotnet_Test/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # https://github.com/actions/checkout
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      # https://github.com/actions/setup-dotnet
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.x
+
+      # https://codeberg.org/mlugg/setup-zig/
+      - name: Setup Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.16.0
+
+      - name: Run Zig Tests
+        working-directory: nf_ziglibs_ai_pathfinder/nf_ziglibs_ai_pathfinder
+        run: zig build test
+
+      - name: build lib
+        working-directory: nf_ziglibs_ai_pathfinder/nf_ziglibs_ai_pathfinder
+        run: |
+          zig build -Doptimize=ReleaseFast -Ddynamic -Dtarget=x86_64-linux
+          mkdir -p ../../__BUILD/linux
+          cp zig-out/lib/libnf_ziglibs_ai_pathfinder.so ../../__BUILD/linux
+
+      - name: Run .NET Tests
+        working-directory: interop/interop-dotnet
+        env:
+          LD_LIBRARY_PATH: ${{ github.workspace }}/__BUILD/linux
+        run: dotnet test Dotnet_Test/Dotnet_Test.csproj

@@ -12,8 +12,20 @@
 		<ProjectReference Include="..\NF.Dotnetlibs.AI.Pathfinder\NF.Dotnetlibs.AI.Pathfinder.csproj" />
 	</ItemGroup>
 
+	<PropertyGroup Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))">
+		<NativeLibPath>$(ProjectDir)..\..\..\__BUILD\windows\nf_ziglibs_ai_pathfinder.dll</NativeLibPath>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))">
+		<NativeLibPath>$(ProjectDir)..\..\..\__BUILD\linux\libnf_ziglibs_ai_pathfinder.so</NativeLibPath>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))">
+		<NativeLibPath>$(ProjectDir)..\..\..\__BUILD\macos\libnf_ziglibs_ai_pathfinder.dylib</NativeLibPath>
+	</PropertyGroup>
+
 	<Target Name="CopyNativeDlls" AfterTargets="Build">
-		<Copy SourceFiles="$(ProjectDir)..\..\..\__BUILD\windows\nf_ziglibs_ai_pathfinder.dll" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+		<Copy SourceFiles="$(NativeLibPath)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" Condition="Exists('$(NativeLibPath)')" />
 	</Target>
 
 	<ItemGroup>
