@@ -212,6 +212,9 @@
     <Compile Include="src\Common\SimpleMap.zig">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="src\errors.zig">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="src\exports.zig">
       <SubType>Code</SubType>
     </Compile>

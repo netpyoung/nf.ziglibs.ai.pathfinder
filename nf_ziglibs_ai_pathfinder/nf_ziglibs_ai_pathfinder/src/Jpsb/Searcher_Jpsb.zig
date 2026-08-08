@@ -8,6 +8,7 @@ const E_DIRSET = @import("../Common/E_DIR.zig").E_DIRSET;
 const int2 = @import("../Common/int2.zig").int2;
 const PriorityQueue = @import("../Common/PriorityQueue.zig").IndexedHeap_4ary;
 
+const SearcherError = @import("../errors.zig").SearcherError;
 const JpsbMap = @import("./JpsbMap.zig");
 
 const PathNodeAndDir = struct {
@@ -32,7 +33,7 @@ fullPathNodes: []PathNode,
 openQueue: PriorityQueue(PathNodeAndDir, void, PathNodeAndDir.CompareFn, PathNodeAndDir.GetHeapIndexRef),
 map: *const JpsbMap,
 
-pub fn Init(allocator: std.mem.Allocator, map: *const JpsbMap) !Searcher_Jpsb {
+pub fn Init(allocator: std.mem.Allocator, map: *const JpsbMap) std.mem.Allocator.Error!Searcher_Jpsb {
     const width: usize = @intCast(map.width);
     const height: usize = @intCast(map.height);
     const size: usize = width * height;
@@ -64,11 +65,27 @@ pub fn Deinit(this: *Searcher_Jpsb, allocator: std.mem.Allocator) void {
 pub fn Search(this: *Searcher_Jpsb, allocator: std.mem.Allocator, sx: i32, sy: i32, gx: i32, gy: i32, pathBuffer: *std.ArrayList(int2)) !bool {
     pathBuffer.clearRetainingCapacity();
 
+    if (sx < 0 or this.map.width <= sx) {
+        return SearcherError.ERR_OUT_OF_BOUND_START;
+    }
+    if (sy < 0 or this.map.height <= sx) {
+        return SearcherError.ERR_OUT_OF_BOUND_GOAL;
+    }
+    if (this.map.IsWallAt(sx, sy)) {
+        return SearcherError.ERR_IS_WALL_ON_START;
+    }
+    if (this.map.IsWallAt(gx, gy)) {
+        return SearcherError.ERR_IS_WALL_ON_GOAL;
+    }
+    if (sx == gx and sy == gy) {
+        return SearcherError.ERR_SAME_POSITION_START_AND_GOAL;
+    }
+
     const startp = int2.Init(sx, sy);
     const goalP = int2.Init(gx, gy);
     const goalNodeOrNull = try this._TryFind(allocator, startp, goalP);
     if (goalNodeOrNull == null) {
-        return false;
+        return SearcherError.ERR_UNREACHABLE_GOAL;
     }
 
     var node = goalNodeOrNull.?;

@@ -5,6 +5,8 @@ const E_DIR = @import("../Common/E_DIR.zig").E_DIR;
 
 const GridMap = @import("./GridMap.zig");
 
+const MapError = @import("../errors.zig").MapError;
+
 pub const INVALID_MAPID = std.math.maxInt(u32);
 
 const JpsbMap = @This();
@@ -53,9 +55,24 @@ const TILE_BITS = struct {
     pub const C_: u32 = 0b0000_0000_0000_0000_0000_0010_0000_0000;
 };
 
-pub fn Init(allocator: std.mem.Allocator, width: i32, height: i32) !JpsbMap {
-    const map_forward = try GridMap.Init(allocator, @intCast(width), @intCast(height));
-    const map_rotated = try GridMap.Init(allocator, @intCast(height), @intCast(width));
+pub fn Init(
+    allocator: std.mem.Allocator,
+    width: i32,
+    height: i32,
+) (MapError || std.mem.Allocator.Error)!JpsbMap {
+    if (width <= 0) {
+        return MapError.ERR_INVALID_MAP_DATA;
+    }
+
+    if (height <= 0) {
+        return MapError.ERR_INVALID_MAP_DATA;
+    }
+
+    var map_forward = try GridMap.Init(allocator, @intCast(width), @intCast(height));
+    errdefer map_forward.Deinit(allocator);
+
+    var map_rotated = try GridMap.Init(allocator, @intCast(height), @intCast(width));
+    errdefer map_rotated.Deinit(allocator);
 
     var map = JpsbMap{
         .width = width,

@@ -19,7 +19,7 @@ padded_height: u32,
 padding_per_row: u32,
 max_id: u32,
 
-pub fn Init(allocator: std.mem.Allocator, width: u32, height: u32) !GridMap {
+pub fn Init(allocator: std.mem.Allocator, width: u32, height: u32) std.mem.Allocator.Error!GridMap {
     var padded_width: u32 = width + 1;
     if ((padded_width % 32) != 0) {
         padded_width = (width / 32 + 1) * 32;

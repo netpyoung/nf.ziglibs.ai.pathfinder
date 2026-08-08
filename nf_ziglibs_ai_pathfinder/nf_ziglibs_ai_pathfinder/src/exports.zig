@@ -9,6 +9,8 @@ pub const Searcher_Jpsb = @import("./Jpsb/Searcher_Jpsb.zig");
 pub const Pathfinder_Jpsb = @import("./Pathfinder_Jpsb.zig");
 pub const IPathfinder = @import("./IPathfinder.zig");
 
+pub const errors = @import("./errors.zig");
+
 pub const E_SMOOTHMETHOD = enum(i32) {
     NONE = 0,
     BRESENHAM_THICKLINE = 1,
@@ -17,18 +19,26 @@ pub const E_SMOOTHMETHOD = enum(i32) {
 
 pub const E_ERRORCODE = enum(i32) {
     NONE = 0,
+    ERR_ALLOCATOR_FAIL_TO_ALLOCATE = -1000, // errors.AllocatorError.OutOfMemory
+    ERR_PRIORITY_QUEUE_INTERNAL_QUEUE_ERROR = -2000, // errors.PriorityQueueError.NodeNotFound
 
-    INVALID_OUTPUT_PTR = -1,
-    FAIL_TO_ALLOCATE = -2,
+    ERR_SEARCHER_MAP_INVALID_WIDTH_OR_HEIGHT = -3000, // errors.SearcherError.ERR_INVALID_MAP_DATA
+    ERR_SEARCHER_IS_WALL_ON_START = -3001, // errors.SearcherError.ERR_IS_WALL_ON_START
+    ERR_SEARCHER_IS_WALL_ON_GOAL = -3002, // errors.SearcherError.ERR_IS_WALL_ON_GOAL
+    ERR_SEARCHER_OUT_OF_BOUND_START = -3003, // errors.SearcherError.ERR_OUT_OF_BOUND_START
+    ERR_SEARCHER_OUT_OF_BOUND_GOAL = -3004, // errors.SearcherError.ERR_OUT_OF_BOUND_GOAL
+    ERR_SEARCHER_SAME_POSITION_START_AND_GOAL = -3005, // errors.SearcherError.ERR_SAME_POSITION_START_AND_GOAL
+    ERR_SEARCHER_UNREACHABLE_GOAL = -3006, // errors.SearcherError.ERR_UNREACHABLE_GOAL
 
-    DEBUGGER_ALLOCATOR_ALREADY_ENABLED = -100,
-    DEBUGGER_ALLOCATOR_NEED_TO_INIT = -101,
-    DEBUGGER_ALLOCATOR_DETECT_LEAK = -103,
+    ERR_DEBUGGER_ALLOCATOR_ALREADY_ENABLED = -4100,
+    ERR_DEBUGGER_ALLOCATOR_NEED_TO_INIT = -4101,
+    ERR_DEBUGGER_ALLOCATOR_DETECT_LEAK = -4103,
 
-    ERR_PATHFINDER_INVALID_PATHFINDER_PTR = -1000,
-    ERR_PATHFINDER_INVALID_OUTBUF_PTR = -1001,
-    ERR_PATHFINDER_FAIL_TO_SEARCH = -1002,
-    ERR_PATHFINDER_NOT_ENOUGH_OUTBUF_SIZE = -1003,
+    ERR_PATHFINDER_INVALID_PTR_PATHFINDER = -4200,
+    ERR_PATHFINDER_INVALID_PTR_OUTBUF = -4201,
+    ERR_PATHFINDER_INVALID_PTR_MAP = -4202,
+    ERR_PATHFINDER_FAIL_TO_SEARCH = -4203,
+    ERR_PATHFINDER_NOT_ENOUGH_OUTBUF_SIZE = -4204,
 };
 
 var gpa = std.heap.DebugAllocator(.{ .safety = true, .stack_trace_frames = 16 }){};
@@ -60,7 +70,7 @@ var s_allocator: std.mem.Allocator = blk: {
 // =========================================
 pub export fn pf_debug_allocator_init() callconv(.c) E_ERRORCODE {
     if (s_isUseDebuggerAllocator.swap(true, .acquire)) {
-        return E_ERRORCODE.DEBUGGER_ALLOCATOR_ALREADY_ENABLED;
+        return E_ERRORCODE.ERR_DEBUGGER_ALLOCATOR_ALREADY_ENABLED;
     }
     s_allocator = gpa_allocator;
     return E_ERRORCODE.NONE;
@@ -68,7 +78,7 @@ pub export fn pf_debug_allocator_init() callconv(.c) E_ERRORCODE {
 
 pub export fn pf_debug_allocator_deinit() callconv(.c) E_ERRORCODE {
     if (!s_isUseDebuggerAllocator.swap(false, .release)) {
-        return E_ERRORCODE.DEBUGGER_ALLOCATOR_NEED_TO_INIT;
+        return E_ERRORCODE.ERR_DEBUGGER_ALLOCATOR_NEED_TO_INIT;
     }
 
     if (builtin.os.tag == .freestanding) {
@@ -91,7 +101,7 @@ pub export fn pf_debug_allocator_deinit() callconv(.c) E_ERRORCODE {
                 return E_ERRORCODE.NONE;
             },
             .leak => {
-                return E_ERRORCODE.DEBUGGER_ALLOCATOR_DETECT_LEAK;
+                return E_ERRORCODE.ERR_DEBUGGER_ALLOCATOR_DETECT_LEAK;
             },
         }
     }
@@ -101,8 +111,22 @@ pub export fn pf_debug_allocator_deinit() callconv(.c) E_ERRORCODE {
 // pf_jpsb_map_
 // =========================================
 pub export fn pf_jpsb_map_create(width: i32, height: i32, outMap: **JpsbMap) callconv(.c) E_ERRORCODE {
-    const map = s_allocator.create(JpsbMap) catch return E_ERRORCODE.FAIL_TO_ALLOCATE;
-    map.* = JpsbMap.Init(s_allocator, width, height) catch return E_ERRORCODE.FAIL_TO_ALLOCATE;
+    const map = s_allocator.create(JpsbMap) catch |err| switch (err) {
+        errors.AllocatorError.OutOfMemory => {
+            return E_ERRORCODE.ERR_ALLOCATOR_FAIL_TO_ALLOCATE;
+        },
+    };
+    errdefer s_allocator.destroy(map);
+
+    map.* = JpsbMap.Init(s_allocator, width, height) catch |err| switch (err) {
+        errors.AllocatorError.OutOfMemory => {
+            return E_ERRORCODE.ERR_ALLOCATOR_FAIL_TO_ALLOCATE;
+        },
+        errors.MapError.ERR_INVALID_MAP_DATA => {
+            return E_ERRORCODE.ERR_SEARCHER_MAP_INVALID_WIDTH_OR_HEIGHT;
+        },
+    };
+
     outMap.* = map;
     return E_ERRORCODE.NONE;
 }
@@ -142,8 +166,23 @@ pub export fn pf_jpsb_map_get_height(map: *const JpsbMap) callconv(.c) i32 {
 // =========================================
 
 pub export fn pf_jpsb_pathfinder_create(map: *const JpsbMap, outPathfinder: **IPathfinder) callconv(.c) E_ERRORCODE {
-    const pathfinder_jpsb = s_allocator.create(Pathfinder_Jpsb) catch return E_ERRORCODE.FAIL_TO_ALLOCATE;
-    pathfinder_jpsb.* = Pathfinder_Jpsb.Init(s_allocator, map) catch return E_ERRORCODE.FAIL_TO_ALLOCATE;
+    if (@intFromPtr(map) == 0) {
+        return E_ERRORCODE.ERR_PATHFINDER_INVALID_PTR_MAP;
+    }
+
+    const pathfinder_jpsb = s_allocator.create(Pathfinder_Jpsb) catch |err| switch (err) {
+        errors.AllocatorError.OutOfMemory => {
+            return E_ERRORCODE.ERR_ALLOCATOR_FAIL_TO_ALLOCATE;
+        },
+    };
+    errdefer s_allocator.destroy(pathfinder_jpsb);
+
+    pathfinder_jpsb.* = Pathfinder_Jpsb.Init(s_allocator, map) catch |err| switch (err) {
+        errors.AllocatorError.OutOfMemory => {
+            return E_ERRORCODE.ERR_ALLOCATOR_FAIL_TO_ALLOCATE;
+        },
+    };
+
     pathfinder_jpsb.interface.ptr = pathfinder_jpsb;
 
     const pathfinder = &pathfinder_jpsb.interface;
@@ -177,12 +216,20 @@ pub export fn pf_pathfinder_find_path_with_smoothmethod(
 }
 
 pub export fn pf_pathfinder_openlist_ensuretotalcapacity(pathfinder: *IPathfinder, capacity: u32) callconv(.c) i32 {
-    const len = pathfinder.EnsureOpenlistTotalCapacity(s_allocator, capacity) catch return -1;
+    const len = pathfinder.EnsureOpenlistTotalCapacity(s_allocator, capacity) catch |err| switch (err) {
+        errors.AllocatorError.OutOfMemory => {
+            return @intFromEnum(E_ERRORCODE.ERR_ALLOCATOR_FAIL_TO_ALLOCATE);
+        },
+    };
     return @intCast(len);
 }
 
 pub export fn pf_pathfinder_pathbuffer_ensuretotalcapacity(pathfinder: *IPathfinder, capacity: u32) callconv(.c) i32 {
-    const len = pathfinder.EnsurePathbufferTotalCapacity(s_allocator, capacity) catch return -1;
+    const len = pathfinder.EnsurePathbufferTotalCapacity(s_allocator, capacity) catch |err| switch (err) {
+        errors.AllocatorError.OutOfMemory => {
+            return @intFromEnum(E_ERRORCODE.ERR_ALLOCATOR_FAIL_TO_ALLOCATE);
+        },
+    };
     return @intCast(len);
 }
 
@@ -200,15 +247,44 @@ inline fn _pf_pathfinder_find_path_with_smoothmethod(
     max_len: i32,
 ) i32 {
     if (@intFromPtr(pathfinder) == 0) {
-        return @intFromEnum(E_ERRORCODE.ERR_PATHFINDER_INVALID_PATHFINDER_PTR);
+        return @intFromEnum(E_ERRORCODE.ERR_PATHFINDER_INVALID_PTR_PATHFINDER);
     }
     if (@intFromPtr(out_buf) == 0) {
-        return @intFromEnum(E_ERRORCODE.ERR_PATHFINDER_INVALID_OUTBUF_PTR);
+        return @intFromEnum(E_ERRORCODE.ERR_PATHFINDER_INVALID_PTR_OUTBUF);
     }
     const buffer = out_buf[0..@intCast(max_len)];
 
     var arr = std.ArrayList(int2).initBuffer(buffer);
-    const searchResult = pathfinder.Search(s_allocator, sx, sy, ex, ey, smoothmode, &arr) catch unreachable;
+
+    const searchResult = pathfinder.Search(s_allocator, sx, sy, ex, ey, smoothmode, &arr) catch |err| switch (err) {
+        errors.AllocatorError.OutOfMemory => {
+            return @intFromEnum(E_ERRORCODE.ERR_ALLOCATOR_FAIL_TO_ALLOCATE);
+        },
+        errors.PriorityQueueError.NodeNotFound => {
+            return @intFromEnum(E_ERRORCODE.ERR_PRIORITY_QUEUE_INTERNAL_QUEUE_ERROR);
+        },
+        errors.SearcherError.ERR_INVALID_MAP_DATA => {
+            return @intFromEnum(E_ERRORCODE.ERR_SEARCHER_MAP_INVALID_WIDTH_OR_HEIGHT);
+        },
+        errors.SearcherError.ERR_IS_WALL_ON_START => {
+            return @intFromEnum(E_ERRORCODE.ERR_SEARCHER_IS_WALL_ON_START);
+        },
+        errors.SearcherError.ERR_IS_WALL_ON_GOAL => {
+            return @intFromEnum(E_ERRORCODE.ERR_SEARCHER_IS_WALL_ON_GOAL);
+        },
+        errors.SearcherError.ERR_OUT_OF_BOUND_START => {
+            return @intFromEnum(E_ERRORCODE.ERR_SEARCHER_OUT_OF_BOUND_START);
+        },
+        errors.SearcherError.ERR_OUT_OF_BOUND_GOAL => {
+            return @intFromEnum(E_ERRORCODE.ERR_SEARCHER_OUT_OF_BOUND_GOAL);
+        },
+        errors.SearcherError.ERR_SAME_POSITION_START_AND_GOAL => {
+            return @intFromEnum(E_ERRORCODE.ERR_SEARCHER_SAME_POSITION_START_AND_GOAL);
+        },
+        errors.SearcherError.ERR_UNREACHABLE_GOAL => {
+            return @intFromEnum(E_ERRORCODE.ERR_SEARCHER_UNREACHABLE_GOAL);
+        },
+    };
     return searchResult;
 }
 
