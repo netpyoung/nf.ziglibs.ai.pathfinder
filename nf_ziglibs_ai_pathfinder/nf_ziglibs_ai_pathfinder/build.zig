@@ -127,13 +127,15 @@ pub fn build(b: *std.Build) void {
     // ===========================================
     // for test
     // ===========================================
+    const root_module = b.addModule("nf_ziglibs_ai_pathfinder", .{
+        .root_source_file = b.path("src/root.zig"),
+        .target = target,
+        .optimize = optimize,
+        .strip = (optimize != .Debug),
+    });
+
     const mod_tests = b.addTest(.{
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("src/root.zig"),
-            .target = target,
-            .optimize = optimize,
-            .strip = (optimize != .Debug),
-        }),
+        .root_module = root_module,
     });
 
     const run_mod_tests = b.addRunArtifact(mod_tests);
