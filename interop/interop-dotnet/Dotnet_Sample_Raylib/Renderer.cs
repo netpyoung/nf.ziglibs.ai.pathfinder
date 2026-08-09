@@ -14,7 +14,9 @@ internal class Renderer
     public Renderer(Handler handler, float tileSize)
     {
         _handler = handler;
-        _camera.Zoom = 1.0f;
+        Vector2 dpi_scale = Raylib.GetWindowScaleDPI();
+        _camera.Zoom = dpi_scale.X;
+        
         _material = Raylib.LoadMaterialDefault();
         _tileSize = tileSize;
     }

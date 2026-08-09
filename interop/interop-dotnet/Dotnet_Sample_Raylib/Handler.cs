@@ -1,4 +1,5 @@
-﻿using NF.Dotnetlibs.AI.Pathfinder;
+﻿using System.Numerics;
+using NF.Dotnetlibs.AI.Pathfinder;
 using Raylib_cs;
 
 internal class Handler
@@ -51,7 +52,8 @@ internal class Handler
         _goal_pos = goal_pos;
         _width = map.GetWidth();
         _height = map.GetHeight();
-        _camera.Zoom = 1.0f;
+        Vector2 dpi_scale = Raylib.GetWindowScaleDPI();
+        _camera.Zoom = dpi_scale.X;
     }
 
     internal void DoSearch()
@@ -177,7 +179,12 @@ internal class Handler
     internal void HandleInput()
     {
         var mouse_pos = Raylib.GetMousePosition();
-        var world_pos = Raylib.GetScreenToWorld2D(mouse_pos, _camera);
+        Vector2 dpi_scale = Raylib.GetWindowScaleDPI();
+        Vector2 corrected_mouse_pos = new Vector2(
+            mouse_pos.X * dpi_scale.X,
+            mouse_pos.Y * dpi_scale.Y
+        );
+        var world_pos = Raylib.GetScreenToWorld2D(corrected_mouse_pos, _camera);
 
         int tile_x = (int)(world_pos.X / _tileSize);
         int tile_y = (int)(world_pos.Y / _tileSize);

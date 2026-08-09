@@ -8,13 +8,23 @@
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
-	<Target Name="CopyNativeDlls" AfterTargets="Build">
-		<Copy SourceFiles="$(ProjectDir)..\..\..\__BUILD\windows\nf_ziglibs_ai_pathfinder.dll" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
-	</Target>
+
 	<ItemGroup>
 		<ProjectReference Include="..\NF.Dotnetlibs.AI.Pathfinder\NF.Dotnetlibs.AI.Pathfinder.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 	  <PackageReference Include="Raylib-cs" Version="8.0.0" />
 	</ItemGroup>
+
+	<PropertyGroup Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))">
+		<NativeLibPath>$(ProjectDir)..\..\..\__BUILD\windows_x86_64\nf_ziglibs_ai_pathfinder.dll</NativeLibPath>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))">
+		<NativeLibPath>$(ProjectDir)..\..\..\__BUILD\linux_x86_64\libnf_ziglibs_ai_pathfinder.so</NativeLibPath>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))">
+		<NativeLibPath>$(ProjectDir)..\..\..\__BUILD\macos_aarch64\libnf_ziglibs_ai_pathfinder.dylib</NativeLibPath>
+	</PropertyGroup>
 </Project>
