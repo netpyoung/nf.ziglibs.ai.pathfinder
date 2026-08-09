@@ -177,7 +177,9 @@ const Renderer = struct {
 
     pub fn Init(handler: *Handler) !Renderer {
         var camera: Raylib.Camera2D = std.mem.zeroes(Raylib.Camera2D);
-        camera.zoom = 1.0;
+        const dpi_scale = Raylib.getWindowScaleDPI();
+        camera.zoom = dpi_scale.x;
+
         const default_material = try Raylib.loadMaterialDefault();
         return .{
             .camera = camera,
@@ -262,7 +264,8 @@ const Handler = struct {
         goal_pos: int2,
     ) Handler {
         var camera: Raylib.Camera2D = std.mem.zeroes(Raylib.Camera2D);
-        camera.zoom = 1.0;
+        const dpi_scale = Raylib.getWindowScaleDPI();
+        camera.zoom = dpi_scale.x;
 
         return .{
             .width = map.width,
@@ -348,7 +351,12 @@ const Handler = struct {
 
     pub fn handleInput(this: *Handler) void {
         const mouse_pos = Raylib.getMousePosition();
-        const world_pos = Raylib.getScreenToWorld2D(mouse_pos, this.camera);
+        const dpi_scale = Raylib.getWindowScaleDPI();
+        const corrected_mouse_pos = Raylib.Vector2{
+            .x = mouse_pos.x * dpi_scale.x,
+            .y = mouse_pos.y * dpi_scale.y,
+        };
+        const world_pos = Raylib.getScreenToWorld2D(corrected_mouse_pos, this.camera);
 
         const tile_x: i32 = @intFromFloat(world_pos.x / this.tile_size);
         const tile_y: i32 = @intFromFloat(world_pos.y / this.tile_size);
