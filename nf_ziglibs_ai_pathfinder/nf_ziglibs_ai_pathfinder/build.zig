@@ -131,7 +131,7 @@ pub fn build(b: *std.Build) void {
         .root_source_file = b.path("src/root.zig"),
         .target = target,
         .optimize = optimize,
-        .strip = (optimize != .Debug),
+        .strip = (optimize != .debug),
     });
 
     const mod_tests = b.addTest(.{
@@ -156,7 +156,7 @@ fn AddPlatformStep(b: *std.Build, opt: PlatformOption) *std.Build.Step {
                 .root_source_file = b.path("src/exports.zig"),
                 .target = target,
                 .optimize = opt.optimize,
-                .strip = (opt.optimize != .Debug),
+                .strip = (opt.optimize != .debug),
             }),
         });
 
@@ -183,7 +183,7 @@ fn AddPlatformStep(b: *std.Build, opt: PlatformOption) *std.Build.Step {
             const install = b.addInstallArtifact(lib, .{
                 .dest_dir = .{ .override = .{ .custom = folder_name } },
                 .implib_dir = .{ .override = .{ .custom = folder_name } },
-                .pdb_dir = if (opt.optimize == .Debug) .{ .override = .{ .custom = folder_name } } else .default,
+                .pdb_dir = if (opt.optimize == .debug) .{ .override = .{ .custom = folder_name } } else .default,
             });
             ret.dependOn(&install.step);
         } else {

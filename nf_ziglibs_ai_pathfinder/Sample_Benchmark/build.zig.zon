@@ -1,6 +1,7 @@
 ﻿.{
     .name = .Sample_Benchmark,
     .version = "0.0.1",
+    .minimum_zig_version = "0.17.0",
     .fingerprint = 0xe00c32fb608a0486,
     .dependencies = .{
         .nf_ziglibs_ai_pathfinder = .{

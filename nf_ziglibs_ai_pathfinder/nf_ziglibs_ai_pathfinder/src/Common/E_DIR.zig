@@ -35,19 +35,19 @@ pub const E_DIR = enum(i32) {
         //  W(6)       E(2)
         // SW(5) S(4) SE(3)
         var xs: [9]i32 = undefined;
-        xs[@intCast(@intFromEnum(E_DIR.N))] = @intFromEnum(E_DIRSET.NORTHWEST) | @intFromEnum(E_DIRSET.NORTH) | @intFromEnum(E_DIRSET.NORTHEAST);
-        xs[@intCast(@intFromEnum(E_DIR.NE))] = @intFromEnum(E_DIRSET.NORTH) | @intFromEnum(E_DIRSET.NORTHEAST) | @intFromEnum(E_DIRSET.EAST);
-        xs[@intCast(@intFromEnum(E_DIR.E))] = @intFromEnum(E_DIRSET.NORTHEAST) | @intFromEnum(E_DIRSET.EAST) | @intFromEnum(E_DIRSET.SOUTHEAST);
-        xs[@intCast(@intFromEnum(E_DIR.SE))] = @intFromEnum(E_DIRSET.EAST) | @intFromEnum(E_DIRSET.SOUTHEAST) | @intFromEnum(E_DIRSET.SOUTH);
-        xs[@intCast(@intFromEnum(E_DIR.S))] = @intFromEnum(E_DIRSET.SOUTHEAST) | @intFromEnum(E_DIRSET.SOUTH) | @intFromEnum(E_DIRSET.SOUTHWEST);
-        xs[@intCast(@intFromEnum(E_DIR.SW))] = @intFromEnum(E_DIRSET.SOUTH) | @intFromEnum(E_DIRSET.SOUTHWEST) | @intFromEnum(E_DIRSET.WEST);
-        xs[@intCast(@intFromEnum(E_DIR.W))] = @intFromEnum(E_DIRSET.SOUTHWEST) | @intFromEnum(E_DIRSET.WEST) | @intFromEnum(E_DIRSET.NORTHWEST);
-        xs[@intCast(@intFromEnum(E_DIR.NW))] = @intFromEnum(E_DIRSET.WEST) | @intFromEnum(E_DIRSET.NORTHWEST) | @intFromEnum(E_DIRSET.NORTH);
-        xs[@intCast(@intFromEnum(E_DIR.START))] = @intFromEnum(E_DIRSET.ALL);
+        xs[@intCast(@backingInt(E_DIR.N))] = @backingInt(E_DIRSET.NORTHWEST) | @backingInt(E_DIRSET.NORTH) | @backingInt(E_DIRSET.NORTHEAST);
+        xs[@intCast(@backingInt(E_DIR.NE))] = @backingInt(E_DIRSET.NORTH) | @backingInt(E_DIRSET.NORTHEAST) | @backingInt(E_DIRSET.EAST);
+        xs[@intCast(@backingInt(E_DIR.E))] = @backingInt(E_DIRSET.NORTHEAST) | @backingInt(E_DIRSET.EAST) | @backingInt(E_DIRSET.SOUTHEAST);
+        xs[@intCast(@backingInt(E_DIR.SE))] = @backingInt(E_DIRSET.EAST) | @backingInt(E_DIRSET.SOUTHEAST) | @backingInt(E_DIRSET.SOUTH);
+        xs[@intCast(@backingInt(E_DIR.S))] = @backingInt(E_DIRSET.SOUTHEAST) | @backingInt(E_DIRSET.SOUTH) | @backingInt(E_DIRSET.SOUTHWEST);
+        xs[@intCast(@backingInt(E_DIR.SW))] = @backingInt(E_DIRSET.SOUTH) | @backingInt(E_DIRSET.SOUTHWEST) | @backingInt(E_DIRSET.WEST);
+        xs[@intCast(@backingInt(E_DIR.W))] = @backingInt(E_DIRSET.SOUTHWEST) | @backingInt(E_DIRSET.WEST) | @backingInt(E_DIRSET.NORTHWEST);
+        xs[@intCast(@backingInt(E_DIR.NW))] = @backingInt(E_DIRSET.WEST) | @backingInt(E_DIRSET.NORTHWEST) | @backingInt(E_DIRSET.NORTH);
+        xs[@intCast(@backingInt(E_DIR.START))] = @backingInt(E_DIRSET.ALL);
 
         var ret: [9]E_DIRSET = undefined;
         for (0..9) |i| {
-            ret[i] = @enumFromInt(xs[i]);
+            ret[i] = @fromBackingInt(@intCast(xs[i]));
         }
         break :blk ret;
     };
@@ -57,44 +57,44 @@ pub const E_DIR = enum(i32) {
         //  W(6)       E(2)
         // SW(5) S(4) SE(3)
         var ret: [9]int2 = undefined;
-        ret[@intCast(@intFromEnum(E_DIR.N))] = int2.Init(0, -1);
-        ret[@intCast(@intFromEnum(E_DIR.NE))] = int2.Init(1, -1);
-        ret[@intCast(@intFromEnum(E_DIR.E))] = int2.Init(1, 0);
-        ret[@intCast(@intFromEnum(E_DIR.SE))] = int2.Init(1, 1);
-        ret[@intCast(@intFromEnum(E_DIR.S))] = int2.Init(0, 1);
-        ret[@intCast(@intFromEnum(E_DIR.SW))] = int2.Init(-1, 1);
-        ret[@intCast(@intFromEnum(E_DIR.W))] = int2.Init(-1, 0);
-        ret[@intCast(@intFromEnum(E_DIR.NW))] = int2.Init(-1, -1);
-        ret[@intCast(@intFromEnum(E_DIR.START))] = int2.Init(0, 0);
+        ret[@intCast(@backingInt(E_DIR.N))] = int2.Init(0, -1);
+        ret[@intCast(@backingInt(E_DIR.NE))] = int2.Init(1, -1);
+        ret[@intCast(@backingInt(E_DIR.E))] = int2.Init(1, 0);
+        ret[@intCast(@backingInt(E_DIR.SE))] = int2.Init(1, 1);
+        ret[@intCast(@backingInt(E_DIR.S))] = int2.Init(0, 1);
+        ret[@intCast(@backingInt(E_DIR.SW))] = int2.Init(-1, 1);
+        ret[@intCast(@backingInt(E_DIR.W))] = int2.Init(-1, 0);
+        ret[@intCast(@backingInt(E_DIR.NW))] = int2.Init(-1, -1);
+        ret[@intCast(@backingInt(E_DIR.START))] = int2.Init(0, 0);
         break :blk ret;
     };
 
     pub inline fn IsDiagonal(dir: E_DIR) bool {
-        return @intFromEnum(dir) & 1 == 1;
+        return @backingInt(dir) & 1 == 1;
     }
 
     pub inline fn IsStraight(dir: E_DIR) bool {
-        return @intFromEnum(dir) & 1 == 0;
+        return @backingInt(dir) & 1 == 0;
     }
 
     pub inline fn ToPos(dir: E_DIR) int2 {
-        return dirToPos[@intCast(@intFromEnum(dir))];
+        return dirToPos[@intCast(@backingInt(dir))];
     }
 
     pub inline fn Right(dir: E_DIR, offset: i32) E_DIR {
-        return @enumFromInt((@intFromEnum(dir) + offset) & 7);
+        return @fromBackingInt(@intCast((@backingInt(dir) + offset) & 7));
     }
 
     pub inline fn Left(dir: E_DIR, offset: i32) E_DIR {
-        return @enumFromInt((@intFromEnum(dir) -% offset) & 7);
+        return @fromBackingInt(@intCast((@backingInt(dir) -% offset) & 7));
     }
 
     pub inline fn ToDirSet(dir: E_DIR) E_DIRSET {
-        return DIR_TO_DIRSET[@intCast(@intFromEnum(dir))];
+        return DIR_TO_DIRSET[@intCast(@backingInt(dir))];
     }
 
     pub inline fn ToAroundSet(dir: E_DIR) E_DIRSET {
-        return DIR_TO_AROUND_DIRSET[@intCast(@intFromEnum(dir))];
+        return DIR_TO_AROUND_DIRSET[@intCast(@backingInt(dir))];
     }
 
     pub inline fn GetAround3(dir: E_DIR) [3]E_DIR {
@@ -106,14 +106,14 @@ pub const E_DIR = enum(i32) {
     }
 
     pub inline fn DiagonalToEastOrWest(dir: E_DIR) E_DIR {
-        if (comptime builtin.mode == .Debug) {
+        if (comptime builtin.mode == .debug) {
             std.debug.assert(dir.IsDiagonal());
         }
         return if (dir == .NE or dir == .SE) .E else .W;
     }
 
     pub inline fn DiagonalToNorthOrSouth(dir: E_DIR) E_DIR {
-        if (comptime builtin.mode == .Debug) {
+        if (comptime builtin.mode == .debug) {
             std.debug.assert(dir.IsDiagonal());
         }
         return if (dir == .NE or dir == .NW) .N else .S;
@@ -150,34 +150,34 @@ pub const E_DIRSET = enum(u8) {
             try writer.print("{}", .{E_DIRSET.ALL});
             return;
         }
-        const x: i32 = @intFromEnum(s);
+        const x: i32 = @backingInt(s);
         var isMulti = false;
-        if ((x & @intFromEnum(E_DIRSET.NORTH)) != 0) {
+        if ((x & @backingInt(E_DIRSET.NORTH)) != 0) {
             try writer.print("{}", .{E_DIRSET.NORTH});
             isMulti = true;
         }
-        if ((x & @intFromEnum(E_DIRSET.SOUTH)) != 0) {
+        if ((x & @backingInt(E_DIRSET.SOUTH)) != 0) {
             if (isMulti) {
                 try writer.print(" | ", .{});
             }
             try writer.print("{}", .{E_DIRSET.SOUTH});
             isMulti = true;
         }
-        if ((x & @intFromEnum(E_DIRSET.EAST)) != 0) {
+        if ((x & @backingInt(E_DIRSET.EAST)) != 0) {
             if (isMulti) {
                 try writer.print(" | ", .{});
             }
             try writer.print("{}", .{E_DIRSET.EAST});
             isMulti = true;
         }
-        if ((x & @intFromEnum(E_DIRSET.WEST)) != 0) {
+        if ((x & @backingInt(E_DIRSET.WEST)) != 0) {
             if (isMulti) {
                 try writer.print(" | ", .{});
             }
             try writer.print("{}", .{E_DIRSET.WEST});
             isMulti = true;
         }
-        if ((x & @intFromEnum(E_DIRSET.NORTHEAST)) != 0) {
+        if ((x & @backingInt(E_DIRSET.NORTHEAST)) != 0) {
             if (isMulti) {
                 try writer.print(" | ", .{});
             }
@@ -185,7 +185,7 @@ pub const E_DIRSET = enum(u8) {
             isMulti = true;
         }
 
-        if ((x & @intFromEnum(E_DIRSET.NORTHWEST)) != 0) {
+        if ((x & @backingInt(E_DIRSET.NORTHWEST)) != 0) {
             if (isMulti) {
                 try writer.print(" | ", .{});
             }
@@ -193,7 +193,7 @@ pub const E_DIRSET = enum(u8) {
             isMulti = true;
         }
 
-        if ((x & @intFromEnum(E_DIRSET.SOUTHEAST)) != 0) {
+        if ((x & @backingInt(E_DIRSET.SOUTHEAST)) != 0) {
             if (isMulti) {
                 try writer.print(" | ", .{});
             }
@@ -201,7 +201,7 @@ pub const E_DIRSET = enum(u8) {
             isMulti = true;
         }
 
-        if ((x & @intFromEnum(E_DIRSET.SOUTHWEST)) != 0) {
+        if ((x & @backingInt(E_DIRSET.SOUTHWEST)) != 0) {
             if (isMulti) {
                 try writer.print(" | ", .{});
             }
@@ -211,16 +211,16 @@ pub const E_DIRSET = enum(u8) {
     }
 
     pub inline fn Intersect(a: E_DIRSET, b: E_DIRSET) E_DIRSET {
-        return @enumFromInt(@intFromEnum(a) | @intFromEnum(b));
+        return @fromBackingInt(@intCast(@backingInt(a) | @backingInt(b)));
     }
 
     pub inline fn IsContains(dirset: E_DIRSET, dir: E_DIR) bool {
         const checkDirset = dir.ToDirSet();
-        return (@intFromEnum(dirset) & @intFromEnum(checkDirset)) == @intFromEnum(checkDirset);
+        return (@backingInt(dirset) & @backingInt(checkDirset)) == @backingInt(checkDirset);
     }
 
     pub fn iterator(this: E_DIRSET) IteratorDir {
-        return .{ .inner = @intFromEnum(this), .count = 0 };
+        return .{ .inner = @backingInt(this), .count = 0 };
     }
 
     pub const IteratorDir = struct {

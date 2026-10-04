@@ -1,8 +1,8 @@
 .{
     .name = .Sample_Raylib,
     .version = "0.0.0",
+    .minimum_zig_version = "0.17.0",
     .fingerprint = 0x3766dc0503a0a1eb,
-    .minimum_zig_version = "0.16.0",
     .dependencies = .{
         .nf_ziglibs_ai_pathfinder = .{
             .path = "../nf_ziglibs_ai_pathfinder",
