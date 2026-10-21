@@ -41,7 +41,10 @@ pub const E_ERRORCODE = enum(i32) {
     ERR_PATHFINDER_NOT_ENOUGH_OUTBUF_SIZE = -4204,
 };
 
-var gpa = std.heap.DebugAllocator(.{ .safety = true, .stack_trace_frames = 16 }){};
+var gpa: std.heap.SafeAllocator = .init(std.heap.page_allocator, .{
+    .stack_trace_frames = 16,
+});
+
 const gpa_allocator = blk: {
     if (builtin.is_test) {
         break :blk std.testing.allocator;
@@ -84,7 +87,7 @@ pub export fn pf_debug_allocator_deinit() callconv(.c) E_ERRORCODE {
     if (builtin.os.tag == .freestanding) {
         return E_ERRORCODE.NONE;
     } else {
-        const result = gpa.deinit();
+        const leak_count = gpa.deinit();
         s_allocator = blk: {
             if (builtin.is_test) {
                 break :blk std.testing.allocator;
@@ -96,14 +99,10 @@ pub export fn pf_debug_allocator_deinit() callconv(.c) E_ERRORCODE {
             break :blk std.heap.smp_allocator;
         };
 
-        switch (result) {
-            .ok => {
-                return E_ERRORCODE.NONE;
-            },
-            .leak => {
-                return E_ERRORCODE.ERR_DEBUGGER_ALLOCATOR_DETECT_LEAK;
-            },
+        if (leak_count != 0) {
+            return E_ERRORCODE.ERR_DEBUGGER_ALLOCATOR_DETECT_LEAK;
         }
+        return E_ERRORCODE.NONE;
     }
 }
 
@@ -218,7 +217,7 @@ pub export fn pf_pathfinder_find_path_with_smoothmethod(
 pub export fn pf_pathfinder_openlist_ensuretotalcapacity(pathfinder: *IPathfinder, capacity: u32) callconv(.c) i32 {
     const len = pathfinder.EnsureOpenlistTotalCapacity(s_allocator, capacity) catch |err| switch (err) {
         errors.AllocatorError.OutOfMemory => {
-            return @intFromEnum(E_ERRORCODE.ERR_ALLOCATOR_FAIL_TO_ALLOCATE);
+            return @backingInt(E_ERRORCODE.ERR_ALLOCATOR_FAIL_TO_ALLOCATE);
         },
     };
     return @intCast(len);
@@ -227,7 +226,7 @@ pub export fn pf_pathfinder_openlist_ensuretotalcapacity(pathfinder: *IPathfinde
 pub export fn pf_pathfinder_pathbuffer_ensuretotalcapacity(pathfinder: *IPathfinder, capacity: u32) callconv(.c) i32 {
     const len = pathfinder.EnsurePathbufferTotalCapacity(s_allocator, capacity) catch |err| switch (err) {
         errors.AllocatorError.OutOfMemory => {
-            return @intFromEnum(E_ERRORCODE.ERR_ALLOCATOR_FAIL_TO_ALLOCATE);
+            return @backingInt(E_ERRORCODE.ERR_ALLOCATOR_FAIL_TO_ALLOCATE);
         },
     };
     return @intCast(len);
@@ -247,10 +246,10 @@ inline fn _pf_pathfinder_find_path_with_smoothmethod(
     max_len: i32,
 ) i32 {
     if (@intFromPtr(pathfinder) == 0) {
-        return @intFromEnum(E_ERRORCODE.ERR_PATHFINDER_INVALID_PTR_PATHFINDER);
+        return @backingInt(E_ERRORCODE.ERR_PATHFINDER_INVALID_PTR_PATHFINDER);
     }
     if (@intFromPtr(out_buf) == 0) {
-        return @intFromEnum(E_ERRORCODE.ERR_PATHFINDER_INVALID_PTR_OUTBUF);
+        return @backingInt(E_ERRORCODE.ERR_PATHFINDER_INVALID_PTR_OUTBUF);
     }
     const buffer = out_buf[0..@intCast(max_len)];
 
@@ -258,31 +257,31 @@ inline fn _pf_pathfinder_find_path_with_smoothmethod(
 
     const searchResult = pathfinder.Search(s_allocator, sx, sy, ex, ey, smoothmode, &arr) catch |err| switch (err) {
         errors.AllocatorError.OutOfMemory => {
-            return @intFromEnum(E_ERRORCODE.ERR_ALLOCATOR_FAIL_TO_ALLOCATE);
+            return @backingInt(E_ERRORCODE.ERR_ALLOCATOR_FAIL_TO_ALLOCATE);
         },
         errors.PriorityQueueError.NodeNotFound => {
-            return @intFromEnum(E_ERRORCODE.ERR_PRIORITY_QUEUE_INTERNAL_QUEUE_ERROR);
+            return @backingInt(E_ERRORCODE.ERR_PRIORITY_QUEUE_INTERNAL_QUEUE_ERROR);
         },
         errors.SearcherError.ERR_INVALID_MAP_DATA => {
-            return @intFromEnum(E_ERRORCODE.ERR_SEARCHER_MAP_INVALID_WIDTH_OR_HEIGHT);
+            return @backingInt(E_ERRORCODE.ERR_SEARCHER_MAP_INVALID_WIDTH_OR_HEIGHT);
         },
         errors.SearcherError.ERR_IS_WALL_ON_START => {
-            return @intFromEnum(E_ERRORCODE.ERR_SEARCHER_IS_WALL_ON_START);
+            return @backingInt(E_ERRORCODE.ERR_SEARCHER_IS_WALL_ON_START);
         },
         errors.SearcherError.ERR_IS_WALL_ON_GOAL => {
-            return @intFromEnum(E_ERRORCODE.ERR_SEARCHER_IS_WALL_ON_GOAL);
+            return @backingInt(E_ERRORCODE.ERR_SEARCHER_IS_WALL_ON_GOAL);
         },
         errors.SearcherError.ERR_OUT_OF_BOUND_START => {
-            return @intFromEnum(E_ERRORCODE.ERR_SEARCHER_OUT_OF_BOUND_START);
+            return @backingInt(E_ERRORCODE.ERR_SEARCHER_OUT_OF_BOUND_START);
         },
         errors.SearcherError.ERR_OUT_OF_BOUND_GOAL => {
-            return @intFromEnum(E_ERRORCODE.ERR_SEARCHER_OUT_OF_BOUND_GOAL);
+            return @backingInt(E_ERRORCODE.ERR_SEARCHER_OUT_OF_BOUND_GOAL);
         },
         errors.SearcherError.ERR_SAME_POSITION_START_AND_GOAL => {
-            return @intFromEnum(E_ERRORCODE.ERR_SEARCHER_SAME_POSITION_START_AND_GOAL);
+            return @backingInt(E_ERRORCODE.ERR_SEARCHER_SAME_POSITION_START_AND_GOAL);
         },
         errors.SearcherError.ERR_UNREACHABLE_GOAL => {
-            return @intFromEnum(E_ERRORCODE.ERR_SEARCHER_UNREACHABLE_GOAL);
+            return @backingInt(E_ERRORCODE.ERR_SEARCHER_UNREACHABLE_GOAL);
         },
     };
     return searchResult;
